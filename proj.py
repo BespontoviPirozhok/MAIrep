@@ -1,4 +1,5 @@
 import asyncio
+<<<<<<< HEAD
 import logging
 import json
 import os
@@ -38,6 +39,16 @@ locals_dict.setdefault("Парк Горького", {
     "visited": False
 })
 
+=======
+from aiogram import Bot, Dispatcher
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
+from aiogram.types import Message
+from aiogram.filters import Command
+
+TOKEN = "7361559221:AAFqDqzF0ZDOgzLS3nTva84JCo90b-UT_oE"
+
+>>>>>>> main
 bot = Bot(
     token=TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -45,6 +56,7 @@ bot = Bot(
 
 dp = Dispatcher()
 
+<<<<<<< HEAD
 class NewLocalForm(StatesGroup):
     waiting_for_place_name = State()
     waiting_for_new_note = State()
@@ -299,6 +311,13 @@ async def on_startup(bot: Bot):
 
 async def main():
     dp.startup.register(on_startup)
+=======
+@dp.message(Command("start"))
+async def cmd_start(message: Message):
+    await message.answer("Заготовка для бота")
+
+async def main():
+>>>>>>> main
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
