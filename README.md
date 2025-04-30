@@ -1,54 +1,45 @@
 И так, тимлид сделал рефакторинг всего нейрокода, что накопился за 2 недели и на 85% написал все сам.  Благодаря рефакторингу код бота разбит на отдельные файлы, которые по-отдельности можно легко редактировать, а также отключать при необходимости. Вот что получилось:
 
-![photo_3_2025-04-30_01-37-12](https://github.com/user-attachments/assets/366ea5f0-5337-4824-8995-8f87d3e8343a)
+![изображение](https://github.com/user-attachments/assets/7dcf7c58-ce80-416d-a400-878b79f7e04d)
+
 
 Приветственный экран бота, некрасиво, но наверное можно пофиксить в @BotFather
 
 
 
+![{4CEF13AB-8EE1-4A9F-BB9D-6CA806FA9290}](https://github.com/user-attachments/assets/4a0c2153-affa-49bb-abd4-001e7062c89e)
 
-![photo_7_2025-04-30_01-37-12](https://github.com/user-attachments/assets/5f4cec8f-ef2a-4e39-810b-1b4c055f7d33)
 
  Вай какая красота, что мы тут наблюдаем?
  - Приветствие на основании времени суток (а вот где это время считывается - у пользователя или на сервере - узнаем позже)
  - 4 большие сочные кнопки с эмодзи
  - Приветственная справка с эмодзи
 
-
-
-
-![photo_5_2025-04-30_01-37-12](https://github.com/user-attachments/assets/4d32cc82-118b-408f-ae06-d07678ba8205)
-![photo_6_2025-04-30_01-37-12](https://github.com/user-attachments/assets/2237c3ea-e483-406e-9805-d0052debd19d)
+![{45B64FF1-070C-45E1-A443-D1278FBC7F30}](https://github.com/user-attachments/assets/7a179218-fff7-4241-afa5-d80927263abb)
+![{B16611CE-4FD5-4DF3-B257-F8574FC6C363}](https://github.com/user-attachments/assets/dc0d0351-5807-40dd-9566-f3900ae306ef)
 
 Просмотр профиля - 2, 3 и 4 кнопки еще не реализовал
 
 
 
-
-![photo_1_2025-04-30_01-37-12 1](https://github.com/user-attachments/assets/edf71da7-3921-4198-8363-31252a528545)
+![{97769185-6068-4192-AD4D-319B58CC465F}](https://github.com/user-attachments/assets/42564a68-7afa-4dc6-a7b8-fbdaff6e05ae)
+![{7F28193B-1C76-454C-BA3F-81048EB74275}](https://github.com/user-attachments/assets/cf3acd28-8592-4bfd-b1c6-576d394bbe55)
 
 Поддержка - на данном этапе существования бота она просто пересылает обращение пользователя.... в консоль, это нужно будет исправить уже тогда, когда появятся роли
 
 
 
+![{0C12EE1B-5516-411B-A74D-D47EBDCFB3F7}](https://github.com/user-attachments/assets/c627d711-643a-4249-9acc-8cdd5fb26a75)
+![{FA5E09EA-58FD-4B17-8CAF-A6ED9F5B9264}](https://github.com/user-attachments/assets/9cbaf185-b7a3-4f82-a774-6921608efbd7)
 
-![photo_2_2025-04-30_01-37-12](https://github.com/user-attachments/assets/677c26f6-33a0-4980-88af-264e6aca5170)
-
-ИИ на чиле, потом допилю для него небольшой интерфейсик
-
-
+Для ИИ тоже есть небольшая менюшка, однако функцию "Маршрут построен" можно перенести и в сам поиск
 
 
-![photo_4_2025-04-30_01-37-12](https://github.com/user-attachments/assets/0539f267-fc26-4243-a960-766ae75de283)
+
+
+
+![{27405EFF-1C0E-4FF4-88F5-122B52B07BD9}](https://github.com/user-attachments/assets/6a3e2784-e7ed-4226-a91e-789f601958cb)
 
 Вывод мест согласно поиску - ничего лишнего, однако кликабельности самих мест и добавления рейтинга и комментариев пока нет
 
-На этом все, за 2 дня такой массив работ
-
-
-
-
-
-![{1E3DC3DA-2D42-4CE8-8D67-1ADD5C52504C}](https://github.com/user-attachments/assets/bc5c28a9-2e55-4f98-b97e-7b145f72035a)
-
-На данный момент имеем такую структуру проекта. Добавить побольше папок (а если надо и мамок) - не проблема
+На этом все, за 3 дня такой массив работ
