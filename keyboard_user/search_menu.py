@@ -20,7 +20,8 @@ router = Router()
 class Step(StatesGroup):
     search_input = State()
     places_list = State()
-    place_show = State()
+    place_view = State()
+    сomments_list = State()
 
 
 Moscow_places = [
@@ -82,7 +83,7 @@ async def unknown_city(message: Message, state: FSMContext):
 
 @router.message(Step.places_list)
 async def inline_places(message: Message, state: FSMContext):
-    await state.set_state(Step.place_show)
+    await state.set_state(Step.place_view)
 
     keyboard = InlineKeyboardBuilder()
     for place in Moscow_places[:4]:
