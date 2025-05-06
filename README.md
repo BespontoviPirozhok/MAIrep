@@ -33,7 +33,7 @@
 ![{0C12EE1B-5516-411B-A74D-D47EBDCFB3F7}](https://github.com/user-attachments/assets/c627d711-643a-4249-9acc-8cdd5fb26a75)
 ![{FA5E09EA-58FD-4B17-8CAF-A6ED9F5B9264}](https://github.com/user-attachments/assets/9cbaf185-b7a3-4f82-a774-6921608efbd7)
 
-Для ИИ тоже есть небольшая менюшка, однако функцию "Маршрут построен" можно перенести и в сам поиск
+Для ИИ тоже есть небольшая менюшка
 
 
 
