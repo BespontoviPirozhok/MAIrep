@@ -36,7 +36,7 @@ async def return_to_user_menu(
     )
 
 
-def beautiful_time(time: datetime) -> str:
+def beautiful_date(date_tuple: tuple[int, int, int]) -> str:
     months_ru = [
         "января",
         "февраля",
@@ -52,10 +52,8 @@ def beautiful_time(time: datetime) -> str:
         "декабря",
     ]
 
-    day = time.day
-    month = months_ru[time.month - 1]
-    year = time.year
-    return f"{day} {month} {year} г."
+    year, month, day = date_tuple
+    return f"{day} {months_ru[month-1]} {year} г."
 
 
 @router.message(CommandStart())
@@ -87,6 +85,6 @@ async def unknown_command(message: Message) -> None:
     """
     Ответ на неизвестное сообщение
     """
-    await message.answer(
-        "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔"
+    await return_to_user_menu(
+        "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔", message
     )
