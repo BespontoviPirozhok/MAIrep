@@ -161,7 +161,7 @@ async def back_to_search_step(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
-
+    
 @router.callback_query(Step.places_list)
 async def place_chosen(callback: CallbackQuery, state: FSMContext):
     data = callback.data
