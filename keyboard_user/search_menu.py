@@ -196,7 +196,7 @@ async def back_to_places_list(message: Message, state: FSMContext):
         "Продолжаем искать дальше...", reply_markup=ReplyKeyboardRemove()
     )
     await message.answer(
-        "Выберите место из списка:",
+        "Кажется нашли:",
         reply_markup=places_list_inline.as_markup(),
     )
 
