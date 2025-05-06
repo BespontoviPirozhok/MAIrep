@@ -7,7 +7,7 @@ import datetime
 router = Router()
 error_rt = Router()
 
-main_menu = ReplyKeyboardMarkup(
+main_menu_reply = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🔍 Поиск мест"), KeyboardButton(text="🤖 Чат с ИИ")],
         [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="❓ Помощь")],
@@ -17,15 +17,45 @@ main_menu = ReplyKeyboardMarkup(
 )
 
 
+back_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Назад")],
+    ],
+    resize_keyboard=True,
+)
+
+
 async def return_to_user_menu(
     msg: str,
     message: Message,
-    keyboard: ReplyKeyboardMarkup = main_menu,
+    keyboard: ReplyKeyboardMarkup = main_menu_reply,
 ) -> None:
     await message.answer(
         msg,
         reply_markup=keyboard,
     )
+
+
+def beautiful_time(time: datetime) -> str:
+    months_ru = [
+        "января",
+        "февраля",
+        "марта",
+        "апреля",
+        "мая",
+        "июня",
+        "июля",
+        "августа",
+        "сентября",
+        "октября",
+        "ноября",
+        "декабря",
+    ]
+
+    day = time.day
+    month = months_ru[time.month - 1]
+    year = time.year
+    return f"{day} {month} {year} г."
 
 
 @router.message(CommandStart())
