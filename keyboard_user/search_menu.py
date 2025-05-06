@@ -130,9 +130,6 @@ async def exit(message: Message, state: FSMContext):
 async def inline_places(message: Message, state: FSMContext):
     await state.set_state(Step.places_list)
     await message.answer("Ищем место на картах 👀", reply_markup=ReplyKeyboardRemove())
-    await message.answer(
-        "Выберите место из списка:", reply_markup=places_list_inline.as_markup()
-    )
 
 
 async def search_request(message: Message, state: FSMContext):
