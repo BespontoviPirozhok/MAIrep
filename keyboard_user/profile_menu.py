@@ -11,9 +11,9 @@ from aiogram import Router
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import F
-from datetime import datetime
+from datetime import date
 
-from .main_menu import return_to_user_menu, beautiful_time
+from .main_menu import return_to_user_menu, beautiful_date
 
 router = Router()
 
@@ -25,26 +25,26 @@ class Step(StatesGroup):
     places_show = State()
 
 
-def compare_times(saved_time: datetime) -> str:
+def compare_times(saved_date: tuple[int, int, int]) -> str:
     def plural_form(n: int, forms: tuple[str, str, str]) -> str:
         n = abs(n) % 100
         n1 = n % 10
         if 11 <= n <= 14:
             return forms[2]
-        if n1 == 1:
-            return forms[0]
-        if 2 <= n1 <= 4:
-            return forms[1]
-        return forms[2]
+        return forms[0] if n1 == 1 else forms[1] if 2 <= n1 <= 4 else forms[2]
 
-    now = datetime.now()
-    now = now.replace(minute=0, second=0, microsecond=0)
-    saved_time = saved_time.replace(minute=0, second=0, microsecond=0)
+    # Создаем объекты даты из кортежей
+    saved_date = date(*saved_date)
+    current_date = date.today()
 
-    delta_days = (now - saved_time).days
+    # Вычисляем абсолютную разницу в днях
+    delta_days = abs((current_date - saved_date).days)
+
+    # Разбиваем на годы, месяцы и дни (условные)
     years = delta_days // 360
-    months = (delta_days % 360) // 30
-    days = (delta_days % 360) % 30
+    remaining_days = delta_days % 360
+    months = remaining_days // 30
+    days = remaining_days % 30
 
     parts = []
     if years > 0:
@@ -57,11 +57,9 @@ def compare_times(saved_time: datetime) -> str:
     return f"Вы с нами уже: {' '.join(parts)}"
 
 
-saved_time = datetime(1666, 8, 12)
-
-# Форматированная информация — только для отображения
+# Форматированная информация — только для отображения, я пока не особо имею представление как жто будет выглядеть в БД
 info = [
-    beautiful_time(saved_time),  # [0]
+    (2023, 8, 12),  # 12 августа 2023 года
     2,  # отзывы
     4,  # комментарии
     7,  # места
@@ -71,7 +69,7 @@ profile_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text=f"   Дата регистрации: {info[0]}   ",
+                text=f"   Дата регистрации: {beautiful_date(info[0])}   ",
                 callback_data="reg_date",
             )
         ],
@@ -114,6 +112,5 @@ async def exit(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "reg_date")
 async def show_reg_date(callback: CallbackQuery):
-    # используем объект datetime (saved_time), а не info[0] (строка)
-    text = compare_times(saved_time)
+    text = compare_times(info[0])
     await callback.answer(text, show_alert=True)
