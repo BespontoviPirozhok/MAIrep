@@ -4,7 +4,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 
-from .main_menu import return_to_user_menu
+from .main_menu import return_to_user_menu, back_reply
 
 router = Router()
 
@@ -36,13 +36,6 @@ help_reply_keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
-help_input_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Назад")],
-    ],
-    resize_keyboard=True,
-)
-
 
 @router.message(Step.help_menu, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
@@ -55,7 +48,7 @@ async def help_input_request(message: Message, state: FSMContext):
     await state.set_state(Step.help_input)
     await message.answer(
         "Опишите ваш вопрос или проблему 👇",
-        reply_markup=help_input_keyboard,
+        reply_markup=back_reply,
     )
 
 

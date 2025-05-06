@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import F
 from datetime import datetime
 
-from .main_menu import return_to_user_menu
+from .main_menu import return_to_user_menu, beautiful_time
 
 router = Router()
 
@@ -23,31 +23,6 @@ class Step(StatesGroup):
     rating_show = State()
     comment_show = State()
     places_show = State()
-
-
-def beautiful_time(time: datetime) -> str:
-    months_ru = [
-        "января",
-        "февраля",
-        "марта",
-        "апреля",
-        "мая",
-        "июня",
-        "июля",
-        "августа",
-        "сентября",
-        "октября",
-        "ноября",
-        "декабря",
-    ]
-
-    day = time.day
-    month = months_ru[time.month - 1]
-    year = time.year
-    return f"{day} {month} {year} г."
-
-
-from datetime import datetime
 
 
 def compare_times(saved_time: datetime) -> str:
@@ -82,7 +57,7 @@ def compare_times(saved_time: datetime) -> str:
     return f"Вы с нами уже: {' '.join(parts)}"
 
 
-saved_time = datetime(1666, 8, 8, 23, 59)
+saved_time = datetime(1666, 8, 12)
 
 # Форматированная информация — только для отображения
 info = [
