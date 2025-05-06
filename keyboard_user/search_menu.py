@@ -161,7 +161,6 @@ async def unknown_city(message: Message, state: FSMContext):
         "Пока поддерживается только поиск по Москве. Попробуйте ввести 'Москва'"
     )
 
-
 @router.callback_query(Step.places_list)
 async def place_chosen(callback: CallbackQuery, state: FSMContext):
     data = callback.data
