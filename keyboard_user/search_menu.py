@@ -237,7 +237,7 @@ async def mark_visited(message: Message, state: FSMContext):
 #         )
 
 
-# выдача синего кента по запросу постраничной выдачи комментов
+# ниже выдача синего кента по запросу постраничной выдачи комментов
 
 
 @router.message(Step.place_view, F.text == "Посмотреть комментарии")
