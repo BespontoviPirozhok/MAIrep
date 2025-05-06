@@ -118,7 +118,7 @@ async def back_to_search_step(callback: CallbackQuery, state: FSMContext):
 
 
 # ---------- Назад из показа списка ----------
-@router.message(Step.place_show, F.text == "Назад")
+@router.message(Step.place_view, F.text == "Назад")
 async def back_from_place_list(message: Message, state: FSMContext):
     await state.set_state(Step.search_input)
     await message.answer(
