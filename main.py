@@ -7,6 +7,7 @@ import os
 import asyncio
 import logging
 import sys
+from database.models import async_main
 
 # КЛАВИАТУРЫ
 from keyboard_user.main_menu import router as main_menu_rt
@@ -14,12 +15,13 @@ from keyboard_user.help_menu import router as help_menu_rt
 from keyboard_user.search_menu import router as search_menu_rt
 from keyboard_user.ai_menu import router as ai_menu_rt
 from keyboard_user.profile_menu import router as profile_menu_rt
+from keyboard_user.feedback_menu import router as feedback_menu_rt
 from keyboard_user.main_menu import error_rt
 
 # ТОКЕН И БД
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-DATABASE = os.getenv("DB")
+DATABASE = os.getenv("DATABASE")
 
 # РОУТЕРЫ
 dp = Dispatcher()
@@ -28,10 +30,12 @@ dp.include_router(search_menu_rt)
 dp.include_router(help_menu_rt)
 dp.include_router(ai_menu_rt)
 dp.include_router(profile_menu_rt)
+dp.include_router(feedback_menu_rt)
 dp.include_router(error_rt)
 
 
 async def main() -> None:
+    await async_main()
     bot = Bot(TOKEN)
     await dp.start_polling(bot)
 

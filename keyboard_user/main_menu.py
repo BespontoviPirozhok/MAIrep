@@ -1,7 +1,9 @@
 from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
 from aiogram import Router
 from aiogram.filters import CommandStart
+
 import datetime
+import database.requests as rq
 
 
 router = Router()
@@ -58,6 +60,7 @@ def beautiful_date(date_tuple: tuple[int, int, int]) -> str:
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
+    await rq.set_user(message.from_user.id, datetime.datetime.now().date())
     """
     Красивый ответ на /start
     """

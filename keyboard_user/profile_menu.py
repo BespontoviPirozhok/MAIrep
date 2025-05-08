@@ -112,5 +112,4 @@ async def exit(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "reg_date")
 async def show_reg_date(callback: CallbackQuery):
-    text = compare_times(info[0])
-    await callback.answer(text, show_alert=True)
+    await callback.answer(compare_times(info[0]), show_alert=True)
