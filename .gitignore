@@ -1,3 +1,5 @@
 .env
 venv
+.venv
 keyboard_user/__pycache__
+README.md
