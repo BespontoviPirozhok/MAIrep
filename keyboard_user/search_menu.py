@@ -129,11 +129,14 @@ place_view_reply_visited = ReplyKeyboardMarkup(
     is_persistent=True,
 )
 
+
 async def places():
     all_places = await get_places()
     places_list_inline = InlineKeyboardBuilder()
     for place in all_places:
-        places_list_inline.row(InlineKeyboardButton(text=place.name, callback_data=place.name))
+        places_list_inline.row(
+            InlineKeyboardButton(text=place.name, callback_data=place.name)
+        )
     places_list_inline.row(
         InlineKeyboardButton(text="Назад", callback_data="back_to_search")
     )
@@ -173,9 +176,8 @@ async def inline_places(message: Message, state: FSMContext):
     await state.set_state(Step.places_list)
     await message.answer("Ищем место на картах 👀", reply_markup=ReplyKeyboardRemove())
     keyboard = await places()
-    await message.answer(
-        "Выберите место из списка:", reply_markup=keyboard.as_markup()
-    )
+    await message.answer("Выберите место из списка:", reply_markup=keyboard.as_markup())
+
 
 async def search_request(message: Message, state: FSMContext):
     await state.set_state(Step.places_list)
@@ -212,8 +214,7 @@ async def place_chosen(callback: CallbackQuery, state: FSMContext):
     await state.update_data(current_place=callback.data)
     await callback.message.delete()
     await callback.message.answer(
-        await get_place_info_text(callback.data),
-        reply_markup=place_view_reply
+        await get_place_info_text(callback.data), reply_markup=place_view_reply
     )
 
 
@@ -236,6 +237,29 @@ async def back_from_comments(message: Message, state: FSMContext):
     await message.answer(
         "Вы вернулись к информации о месте.", reply_markup=place_view_reply
     )
+
+
+@router.message(Step.place_view, F.text == "Отметить это место как посещенное")
+async def mark_visited(message: Message, state: FSMContext):
+    await message.answer(
+        "Тут должен быть диалог оценки и комментирования, но тимлид чето захотел спатки",
+        reply_markup=place_view_reply,
+    )
+
+
+# @router.message(Step.place_view, F.text == "Посмотреть комментарии") #старая версия показа комментов - показываются сразу все комменты
+# async def show_comments(message: Message, state: FSMContext):
+#     data = await state.get_data()
+#     place = data.get("current_place")
+#     await state.set_state(Step.сomments_list)
+#     for comment, (comment_user, comment_date) in places_data[place]["comments"].items():
+#         await message.answer(
+#             f"{comment_user}, {beautiful_date(comment_date)}\n{comment}",
+#             reply_markup=back_reply,
+#         )
+
+
+# ниже выдача синего кента по запросу постраничной выдачи комментов
 
 
 @router.message(Step.place_view, F.text == "Посмотреть комментарии")
