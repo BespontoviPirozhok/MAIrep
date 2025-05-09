@@ -34,8 +34,7 @@ async def set_user(tg_id: int, regist_date: date) -> None:
 
 async def get_user(tg_id: int) -> Optional[User]:
     async with async_sessions() as session:
-        result = await session.scalar(select(User).where(User.tg_id == tg_id))
-        return result.all()
+        return await session.scalar(select(User).where(User.tg_id == tg_id))
 
 
 async def get_places() -> List[Place]:
@@ -64,40 +63,33 @@ async def add_place(name: str, description: str, summary_rating: float) -> None:
         await session.commit()
 
 
-async def get_comments(
-    place_id: Optional[int] = None, user_id: Optional[int] = None
-) -> List[Comment]:
-    async with async_sessions() as session:
-        # Может передать как комменты пользователя, так и все комменты места # обновлено: Сеня, нам нужны только ВСЕ комменты конкретного места
-        query = select(Comment)
-        if place_id:
-            query = query.where(Comment.place_id == place_id)
-        if user_id:
-            query = query.where(Comment.user_id == user_id)
-        result = await session.scalars(query.order_by(Comment.date.desc()))
-        return result.all
-
-
 async def add_comment(
-    place_id: int,
-    user_id: int,
-    username: str,
+    commentator_tg_id: int,
+    place_name: str,
     text: str,
-    user_rating: int,
-    comment_date: date,
+    rating: int,
 ) -> None:
     async with async_sessions() as session:
         session.add(
             Comment(
-                user_id=user_id,
-                username=username,
-                place_name=place_id,
+                commentator_tg_id=commentator_tg_id,
                 comment_text=text,
-                comment_rating=user_rating,
-                comment_date=comment_date,
+                place_name=place_name,
+                commentator_rating=rating,
             )
         )
         await session.commit()
+
+
+async def get_comments(
+    place_name: Optional[str] = None,
+) -> List[Comment]:
+    async with async_sessions() as session:
+        query = select(Comment)
+        if place_name:
+            query = query.where(Comment.place_name == place_name)
+        result = await session.scalars(query)
+        return result.all()
 
 
 async def get_visits(user_id: Optional[int] = None) -> List[VisitedPlace]:
