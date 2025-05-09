@@ -68,7 +68,7 @@ async def get_comments(
     place_id: Optional[int] = None, user_id: Optional[int] = None
 ) -> List[Comment]:
     async with async_sessions() as session:
-        # Может передать как комменты пользователя, так и все комменты места # обновлено: Сеня, нам нужны только все комменты места
+        # Может передать как комменты пользователя, так и все комменты места # обновлено: Сеня, нам нужны только ВСЕ комменты конкретного места
         query = select(Comment)
         if place_id:
             query = query.where(Comment.place_id == place_id)
