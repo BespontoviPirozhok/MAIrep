@@ -63,9 +63,9 @@ async def get_place_info_text(place_name: str) -> str:
     place = await get_current_place(place_name)
     return (
         f"{place.name}\n\n"
-        f"{place.adress}\n"
-        f"{place.description}\n"
-        f"Рейтинг: {place.summary_rating}\n\n"
+        f"Адрес: {place.adress}\n"
+        f"Описание: {place.description}\n"
+        f"Средняя оценка: {place.summary_rating}\n\n"
         # f"{place_data['summary']}"
     )
 
