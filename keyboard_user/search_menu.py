@@ -2,7 +2,6 @@ from aiogram.types import (
     Message,
     KeyboardButton,
     ReplyKeyboardMarkup,
-    InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
     ReplyKeyboardRemove,
@@ -119,8 +118,6 @@ async def place_chosen(callback: CallbackQuery, state: FSMContext):
         )
         await callback.answer()
         return
-
-    place = await get_current_place(callback.data)
 
     await state.set_state(Step.place_view)
     await state.update_data(current_place=callback.data)
