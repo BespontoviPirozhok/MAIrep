@@ -61,18 +61,33 @@ def pretty_date(date_str: str) -> str:
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     await rq.set_user(message.from_user.id, datetime.datetime.now().date())
-    """
-    Красивый ответ на /start
-    """
+    """Красивый ответ на /start"""
+
     now = datetime.datetime.now()
-    if 4 <= now.hour <= 11:
-        await message.answer(f"Доброе утро, {(message.from_user.full_name)}! 🌄")
-    if 12 <= now.hour <= 16:
-        await message.answer(f"Добрый день, {(message.from_user.full_name)}! ⛅")
-    if 17 <= now.hour <= 23:
-        await message.answer(f"Добрый вечер, {(message.from_user.full_name)}! 🌇")
-    if 0 <= now.hour <= 3:
-        await message.answer(f"Доброй ночи, {(message.from_user.full_name)}! 🌃")
+    hour = now.hour
+    time_str = now.strftime("%H:%M")  # Форматируем время как ЧЧ:ММ
+    first_name = message.from_user.first_name
+    emoji = "🌃"
+
+    # Определяем приветственную фразу
+    if 4 <= hour <= 11:
+        greeting = "Доброе утро"
+        emoji = "🌄"
+    elif 12 <= hour <= 16:
+        greeting = "Добрый день"
+        emoji = "⛅"
+    elif 17 <= hour <= 23:
+        greeting = "Добрый вечер"
+        emoji = "🌇"
+    else:
+        greeting = "Доброй ночи"
+
+    # Отправляем приветственное сообщение
+    await message.answer(
+        f"В Москве сейчас {time_str}\n{greeting}, {first_name}! {emoji}"
+    )
+
+    # Отправляем меню
     await return_to_user_menu(
         """Добро пожаловать в бота Location Chooser, вот мои функции:
 🔍 Поиск мест - поиск интересующих вас мест
