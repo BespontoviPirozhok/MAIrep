@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import F
 from datetime import date
 
-from .main_menu import return_to_user_menu, beautiful_date
+from .main_menu import return_to_user_menu, pretty_date
 
 router = Router()
 
@@ -69,7 +69,7 @@ profile_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text=f"   Дата регистрации: {beautiful_date(info[0])}   ",
+                text=f"   Дата регистрации: {pretty_date("2025-12-3")}   ",
                 callback_data="reg_date",
             )
         ],

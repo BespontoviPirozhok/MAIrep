@@ -55,36 +55,33 @@ feedback_rating_inline = InlineKeyboardMarkup(
     ],
 )
 
+
 @router.message(Step.place_view, F.text == "Отметить это место как посещенное")
 async def rating(message: Message, state: FSMContext):
-    await state.update_data(place_id= await)
-    await state.set_state(Step.take_rating)
+    # data = await state.get_data()
+    # place_name = data.get("current_place_name")
+
+    # # Сохраняем название для использования в следующих состояниях
+    # await state.update_data(current_place_name=place_name)
+    # await state.set_state(Step.take_rating)
+    await message.answer("Достаем звезды с неба 🌃", reply_markup=ReplyKeyboardRemove())
     await message.answer(
         "Насколько вам понравилось место от 1 до 5?:",
         reply_markup=feedback_rating_inline,
     )
 
 
-@router.callback_query(F.data == "back_to_place_view")
-async def back_to_place_view_handler(callback: CallbackQuery, state: FSMContext):
-    data = await state.get_data()
-    place = data.get("current_place")
-    await state.set_state(Step.place_view)
-    await callback.message.delete()
-    await callback.message.answer(
-        await get_place_info_text(place), reply_markup=place_view_reply
-    )
-    await callback.answer()
-
 @router.callback_query(F.data.startswith("star_"))
 async def handle_rating(callback: CallbackQuery, state: FSMContext):
-    place_id = await get_place_by_id()
-    rating = int(callback.data.split("_")[1])
+    # Получаем сохраненное название места
+    data = await state.get_data()
+    place_name = data.get("current_place_name")
 
+    rating = int(callback.data.split("_")[1])
     await state.update_data(
-        user_rating=rating, place_id=place_id  # Используем сохраненный ID
+        user_rating=rating, place_name=place_name  # Сохраняем название
     )
-    await state.set_state(Step.waiting_comment)
+    await state.set_state(Step.take_comment)
 
     skip_comment = InlineKeyboardMarkup(
         inline_keyboard=[
@@ -96,104 +93,3 @@ async def handle_rating(callback: CallbackQuery, state: FSMContext):
         reply_markup=skip_comment,
     )
     await callback.answer()
-
-# async def show_confirmation(message: Message, state: FSMContext):
-#     data = await state.get_data()
-#     rating = data.get("user_rating", "не указана")
-#     comment = data.get("user_comment", "без комментария")
-
-#     text = (
-#         "Проверьте данные:\n"
-#         f"★ Оценка: {rating}\n"
-#         f"📝 Комментарий: {comment}\n\n"
-#         "Подтверждаете сохранение?"
-#     )
-
-#     await message.answer(
-#         text,
-#         reply_markup=InlineKeyboardMarkup(
-#             inline_keyboard=[
-#                 [
-#                     InlineKeyboardButton(
-#                         text="✅ Подтвердить", callback_data="confirm_feedback"
-#                     ),
-#                     InlineKeyboardButton(
-#                         text="❌ Отменить", callback_data="cancel_feedback"
-#                     ),
-#                 ]
-#             ]
-#         ),
-#     )
-
-
-# @router.callback_query(F.data.startswith("star_"))
-# async def handle_rating(callback: CallbackQuery, state: FSMContext):
-#     data = await state.get_data()
-#     place_id = data.get("place_id")  # Получаем place_id из состояния
-#     rating = int(callback.data.split("_")[1])
-
-#     await state.update_data(
-#         user_rating=rating, place_id=place_id  # Используем сохраненный ID
-#     )
-#     await state.set_state(Step.waiting_comment)
-
-#     skip_comment = InlineKeyboardMarkup(
-#         inline_keyboard=[
-#             [InlineKeyboardButton(text="Пропустить", callback_data="skip_comment")]
-#         ]
-#     )
-#     await callback.message.edit_text(
-#         "Хотите добавить комментарий? Просто напишите его ниже!",
-#         reply_markup=skip_comment,
-#     )
-#     await callback.answer()
-
-
-# @router.message(Step.waiting_comment, F.text)
-# async def handle_comment(message: Message, state: FSMContext):
-#     await state.update_data(user_comment=message.text)
-#     await show_confirmation(message, state)
-
-
-# @router.callback_query(F.data == "confirm_feedback", Step.confirm_feedback)
-# async def confirm_feedback(callback: CallbackQuery, state: FSMContext):
-#     data = await state.get_data()
-
-#     # Все данные хранятся в состоянии и отправляются вместе
-#     async with async_sessions() as session:
-#         # Сохраняем посещение
-#         session.add(
-#             VisitedPlace(
-#                 user_id=callback.from_user.id,
-#                 place_id=data["place_id"],
-#                 visit_date=date.today(),
-#             )
-#         )
-
-#         # Сохраняем комментарий с оценкой
-#         session.add(
-#             Comment(
-#                 user_id=callback.from_user.id,
-#                 username=callback.from_user.full_name,
-#                 place_id=data["place_id"],
-#                 text=data.get("user_comment", "без комментария"),
-#                 rating=data["user_rating"],
-#                 comment_date=date.today(),
-#             )
-#         )
-#         await session.commit()
-
-#     await callback.message.edit_text("✅ Отзыв успешно сохранен!")
-#     await state.clear()
-#     await callback.answer()
-
-
-# @router.callback_query(F.data.startswith("place_"))
-# async def show_place(callback: CallbackQuery, state: FSMContext):
-#     place_id = int(callback.data.split("_")[1])
-#     place = await get_place_by_id(place_id)  # Ваша функция для получения места
-#     await state.update_data(current_place=place)  # Сохраняем объект места
-#     await state.set_state(Step.place_view)
-#     await callback.message.answer(
-#         get_place_info_text(place), reply_markup=place_view_reply
-#     )

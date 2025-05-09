@@ -63,9 +63,9 @@ async def get_place_info_text(place_name: str) -> str:
     place = await get_current_place(place_name)
     return (
         f"{place.name}\n\n"
+        f"Средняя оценка: {place.summary_rating}\n\n"
         f"Адрес: {place.adress}\n"
         f"Описание: {place.description}\n"
-        f"Средняя оценка: {place.summary_rating}\n\n"
         # f"{place_data['summary']}"
     )
 
@@ -123,7 +123,7 @@ async def place_chosen(callback: CallbackQuery, state: FSMContext):
         return
 
     await state.set_state(Step.place_view)
-    await state.update_data(current_place=callback.data)
+    await state.update_data(current_place_name=callback.data)
     await callback.message.delete()
     await callback.message.answer(
         await get_place_info_text(callback.data), reply_markup=place_view_reply

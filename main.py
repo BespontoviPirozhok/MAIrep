@@ -32,7 +32,7 @@ dp.include_router(help_menu_rt)
 dp.include_router(ai_menu_rt)
 dp.include_router(profile_menu_rt)
 dp.include_router(comments_menu_rt)
-# dp.include_router(feedback_menu_rt)
+dp.include_router(feedback_menu_rt)
 dp.include_router(error_rt)
 
 
