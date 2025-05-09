@@ -16,6 +16,7 @@ from keyboard_user.search_menu import router as search_menu_rt
 from keyboard_user.ai_menu import router as ai_menu_rt
 from keyboard_user.profile_menu import router as profile_menu_rt
 from keyboard_user.feedback_menu import router as feedback_menu_rt
+from keyboard_user.comments_menu import router as comments_menu_rt
 from keyboard_user.main_menu import error_rt
 
 # ТОКЕН И БД
@@ -30,7 +31,8 @@ dp.include_router(search_menu_rt)
 dp.include_router(help_menu_rt)
 dp.include_router(ai_menu_rt)
 dp.include_router(profile_menu_rt)
-dp.include_router(feedback_menu_rt)
+dp.include_router(comments_menu_rt)
+# dp.include_router(feedback_menu_rt)
 dp.include_router(error_rt)
 
 
