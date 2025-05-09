@@ -27,7 +27,9 @@ class Step(StatesGroup):  # состояния
 
 place_view_reply = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Отметить это место как посещенное")],
+        [
+            KeyboardButton(text="Отметить это место как посещенное")
+        ],  # Если места не нашлось в списке посещенных у данного польщователя
         [KeyboardButton(text="Посмотреть комментарии")],
         [KeyboardButton(text="Назад")],
     ],
@@ -37,7 +39,9 @@ place_view_reply = ReplyKeyboardMarkup(
 
 place_view_reply_visited = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Место уже посещено ✅")],
+        [
+            KeyboardButton(text="Место уже посещено ✅")
+        ],  # Если место уже есть среди посещенных в таблице пользователя
         [KeyboardButton(text="Посмотреть комментарии")],
         [KeyboardButton(text="Назад")],
     ],
