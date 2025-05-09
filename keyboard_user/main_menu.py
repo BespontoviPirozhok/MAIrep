@@ -38,7 +38,7 @@ async def return_to_user_menu(
     )
 
 
-def beautiful_date(date_tuple: tuple[int, int, int]) -> str:
+def beautiful_date(date_str: str) -> str:
     months_ru = [
         "января",
         "февраля",
@@ -54,7 +54,9 @@ def beautiful_date(date_tuple: tuple[int, int, int]) -> str:
         "декабря",
     ]
 
-    year, month, day = date_tuple
+    # Разбиваем строку на компоненты и преобразуем в числа
+    year, month, day = map(int, date_str.split("-"))
+
     return f"{day} {months_ru[month-1]} {year} г."
 
 
