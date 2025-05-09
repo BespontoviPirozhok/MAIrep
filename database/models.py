@@ -39,12 +39,13 @@ class Comment(Base):
     __tablename__ = "comments"
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
+    comment_date = mapped_column(Date)
+    comment_text: Mapped[str] = mapped_column(String(200))
+    comment_rating: Mapped[float] = mapped_column(Integer)
+    place_name: Mapped[int] = mapped_column(ForeignKey("places.place_id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
     username: Mapped[str] = mapped_column(String(100))
-    place_id: Mapped[int] = mapped_column(ForeignKey("places.place_id"))
-    user_rating: Mapped[float] = mapped_column(Integer)
-    text: Mapped[str] = mapped_column(String(200))
-    comment_date = mapped_column(Date)
+
     # user = relationship("User", back_populates="comments")
     # place = relationship("Place", back_populates="comments")
 

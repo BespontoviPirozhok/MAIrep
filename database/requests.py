@@ -91,9 +91,9 @@ async def add_comment(
             Comment(
                 user_id=user_id,
                 username=username,
-                place_id=place_id,
-                text=text,
-                user_rating=user_rating,
+                place_name=place_id,
+                comment_text=text,
+                comment_rating=user_rating,
                 comment_date=comment_date,
             )
         )
