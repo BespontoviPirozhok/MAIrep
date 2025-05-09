@@ -38,7 +38,7 @@ async def return_to_user_menu(
     )
 
 
-def beautiful_date(date_str: str) -> str:
+def pretty_date(date_str: str) -> str:
     months_ru = [
         "января",
         "февраля",
@@ -53,8 +53,6 @@ def beautiful_date(date_str: str) -> str:
         "ноября",
         "декабря",
     ]
-
-    # Разбиваем строку на компоненты и преобразуем в числа
     year, month, day = map(int, date_str.split("-"))
 
     return f"{day} {months_ru[month-1]} {year} г."

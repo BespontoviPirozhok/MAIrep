@@ -16,7 +16,7 @@ from datetime import date
 from database.models import async_sessions, VisitedPlace, Comment
 from database.requests import get_place_by_id, get_comments
 from .search_menu import place_view_reply, place_view_reply_visited, get_place_info_text
-from .main_menu import beautiful_date, back_reply
+from .main_menu import pretty_date, back_reply
 
 router = Router()
 
@@ -79,7 +79,7 @@ async def show_more_comments(message: Message, state: FSMContext):
     # Отправляем комментарии
     for comment, (text, date_tuple) in comments_batch:
         await message.answer(
-            f"{text}, {beautiful_date(date_tuple)}\n{comment}",
+            f"{text}, {pretty_date(date_tuple)}\n{comment}",
             reply_markup=(
                 ReplyKeyboardRemove()
                 if offset + BATCH_SIZE >= len(all_comments)

@@ -23,10 +23,19 @@ router = Router()
 class Step(StatesGroup):  # состояния
     place_view = State()  # просмотр информации о месте
     take_rating = State()  # оставляем 1-5 звезд
-    take_comment = State() # оставляем комментарий или пропускаем его
-    feedback_full_confirfm = State() #подтверждение звезд + комментария
-    feedback_rating_confirm = State() #подтверждение только звезд
+    take_comment = State()  # оставляем комментарий или пропускаем его
+    feedback_full_confirfm = State()  # подтверждение звезд + комментария
+    feedback_rating_confirm = State()  # подтверждение только звезд
 
+
+feedback_full_confirfm_text = """Ваш отзыв будет выглядеть так:
+    {username}
+    {pretty_rating} {comment_date}
+    {comment_text}"""
+
+feedback_rating_confirfm_text = """Ваш отзыв будет выглядеть так:
+    {username}
+    {pretty_rating} {comment_date}"""
 
 feedback_rating_inline = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -46,40 +55,9 @@ feedback_rating_inline = InlineKeyboardMarkup(
     ],
 )
 
-
-async def show_confirmation(message: Message, state: FSMContext):
-    data = await state.get_data()
-    rating = data.get("user_rating", "не указана")
-    comment = data.get("user_comment", "без комментария")
-
-    text = (
-        "Проверьте данные:\n"
-        f"★ Оценка: {rating}\n"
-        f"📝 Комментарий: {comment}\n\n"
-        "Подтверждаете сохранение?"
-    )
-
-    await message.answer(
-        text,
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="✅ Подтвердить", callback_data="confirm_feedback"
-                    ),
-                    InlineKeyboardButton(
-                        text="❌ Отменить", callback_data="cancel_feedback"
-                    ),
-                ]
-            ]
-        ),
-    )
-    await state.set_state(Step.confirm_feedback)
-
-
 @router.message(Step.place_view, F.text == "Отметить это место как посещенное")
 async def rating(message: Message, state: FSMContext):
-    await state.update_data(place_id= await)  # Сохраняем place_id
+    await state.update_data(place_id= await)
     await state.set_state(Step.take_rating)
     await message.answer(
         "Насколько вам понравилось место от 1 до 5?:",
@@ -119,13 +97,33 @@ async def handle_rating(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
+# async def show_confirmation(message: Message, state: FSMContext):
+#     data = await state.get_data()
+#     rating = data.get("user_rating", "не указана")
+#     comment = data.get("user_comment", "без комментария")
 
+#     text = (
+#         "Проверьте данные:\n"
+#         f"★ Оценка: {rating}\n"
+#         f"📝 Комментарий: {comment}\n\n"
+#         "Подтверждаете сохранение?"
+#     )
 
-
-
-
-
-
+#     await message.answer(
+#         text,
+#         reply_markup=InlineKeyboardMarkup(
+#             inline_keyboard=[
+#                 [
+#                     InlineKeyboardButton(
+#                         text="✅ Подтвердить", callback_data="confirm_feedback"
+#                     ),
+#                     InlineKeyboardButton(
+#                         text="❌ Отменить", callback_data="cancel_feedback"
+#                     ),
+#                 ]
+#             ]
+#         ),
+#     )
 
 
 # @router.callback_query(F.data.startswith("star_"))
