@@ -31,6 +31,7 @@ async def set_user(tg_id: int, regist_date: date) -> None:
             session.add(User(tg_id=tg_id, regist_date=regist_date))
             await session.commit()
 
+
 async def get_user(tg_id: int) -> Optional[User]:
     async with async_sessions() as session:
         result = await session.scalar(select(User).where(User.tg_id == tg_id))
@@ -48,9 +49,18 @@ async def get_current_place(place_name: str) -> Optional[Place]:
         return await session.scalar(select(Place).where(Place.name == place_name))
 
 
-async def add_place(name: str, description: str, rating: float) -> None:
+async def get_place_by_id(
+    place_id: int,
+) -> Optional[Place]:  # синий кент зачем-то написал и такую функцию
     async with async_sessions() as session:
-        session.add(Place(name=name, description=description, rating=rating))
+        return await session.scalar(select(Place).where(Place.place_id == place_id))
+
+
+async def add_place(name: str, description: str, summary_rating: float) -> None:
+    async with async_sessions() as session:
+        session.add(
+            Place(name=name, description=description, summary_rating=summary_rating)
+        )
         await session.commit()
 
 
@@ -58,7 +68,7 @@ async def get_comments(
     place_id: Optional[int] = None, user_id: Optional[int] = None
 ) -> List[Comment]:
     async with async_sessions() as session:
-        # Может передать как комменты пользователя, так и все комменты места
+        # Может передать как комменты пользователя, так и все комменты места # обновлено: Сеня, нам нужны только все комменты места
         query = select(Comment)
         if place_id:
             query = query.where(Comment.place_id == place_id)
@@ -69,11 +79,23 @@ async def get_comments(
 
 
 async def add_comment(
-    place_id: int, user_id: int, text: str, comment_date: date
+    place_id: int,
+    user_id: int,
+    username: str,
+    text: str,
+    user_rating: int,
+    comment_date: date,
 ) -> None:
     async with async_sessions() as session:
         session.add(
-            Comment(user_id=user_id, place_id=place_id, text=text, date=comment_date)
+            Comment(
+                user_id=user_id,
+                username=username,
+                place_id=place_id,
+                text=text,
+                user_rating=user_rating,
+                comment_date=comment_date,
+            )
         )
         await session.commit()
 
@@ -97,15 +119,15 @@ async def has_visited(user_id: int, place_id: int) -> bool:
     async with async_sessions() as session:
         result = await session.scalar(
             select(VisitedPlace).where(
-                and_(
-                    VisitedPlace.user_id == user_id,
-                    VisitedPlace.place_id == place_id
-                )
+                and_(VisitedPlace.user_id == user_id, VisitedPlace.place_id == place_id)
             )
         )
         return result is not None
 
-async def get_user_stats(tg_id: int) -> "UserInfo":
+
+async def get_user_stats(
+    tg_id: int,
+) -> "UserInfo":  # перепиши, чтобы можно было получать дату регистрации
     async with async_sessions() as session:
         user = await session.scalar(
             select(User)

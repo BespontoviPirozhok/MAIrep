@@ -31,7 +31,7 @@ class Place(Base):
     name: Mapped[str] = mapped_column(String(30))
     adress: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(200))
-    rating: Mapped[float] = mapped_column(Float)
+    summary_rating: Mapped[float] = mapped_column(Float)
     # comments = relationship("Comment", back_populates="place")
 
 
@@ -40,7 +40,9 @@ class Comment(Base):
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
+    username: Mapped[str] = mapped_column(String(100))
     place_id: Mapped[int] = mapped_column(ForeignKey("places.place_id"))
+    user_rating: Mapped[float] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(String(200))
     comment_date = mapped_column(Date)
     # user = relationship("User", back_populates="comments")
