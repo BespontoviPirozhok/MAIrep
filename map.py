@@ -1,25 +1,47 @@
-import requests
-#from .search_menu import Step
+import aiohttp
+import asyncio
 
-BASE_URL = 'https://suggest-maps.yandex.ru/v1/suggest' 
 
-apikey = '03366a1f-b153-4a39-a9ae-e110d49be220' #ключ от яндекс.саджест
-text = 'москва' # = Step.search_input  ??
-lang = 'ru'
+async def fetch_json(url):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            return await response.json()
 
-try:
-    response = requests.get(f"{BASE_URL}?apikey={apikey}&text={text}&lang={lang}")
-except requests.ConnectionError as e:
-    print("Ошибка подключения:", e)
-except requests.Timeout as e:
-    print("Ошибка тайм-аута:", e)
-except requests.RequestException as e:
-    print("Ошибка запроса:", e)
 
-answer = response.json() 
-dict = answer['results'] #для удобства работы с объектом result
+class Place:
+    def __init__(self, name: str, address: str, category: str, code: str) -> None:
+        self.name = name
+        self.address = address
+        self.category = category
+        self.code = code
 
-print(dict[1]['title']['text'])
-print('площадь вашего города составляет ')
-print(dict[1]['distance']['text'])
+    def __repr__(self):
+        return self.code
 
+
+async def map(request):
+    BASE_URL = "https://suggest-maps.yandex.ru/v1/suggest"
+    apikey = "03366a1f-b153-4a39-a9ae-e110d49be220"
+    lang = "ru"
+    results = 5
+
+    data = await fetch_json(
+        f"{BASE_URL}?apikey={apikey}&text={request}&results={results}&lang={lang}"
+    )
+
+    list = []
+    for i in range(5):
+        name = data["results"][i]["title"]["text"]
+        address = data["results"][i]["subtitle"]["text"]
+        category = data["results"][i]["tags"]
+        code = name + " " + address
+
+        place = Place(name, address, category, code)
+        list.append(place)
+
+    print(repr(list))
+
+    return list
+
+
+asyncio.run(map("Метрополис"))
