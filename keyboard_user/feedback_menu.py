@@ -13,9 +13,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from datetime import date
-from database.models import async_sessions, VisitedPlace, Comment
-from database.requests import set_user, get_user, add_comment
-from .search_menu import place_view_reply, place_view_reply_visited, get_place_info_text
+from database.requests import (
+    add_comment,
+    get_comments,
+    delete_comment,
+)
+from .search_menu import place_view_smart_reply, get_place_info_text
+
 
 router = Router()
 
@@ -24,19 +28,15 @@ class Step(StatesGroup):  # состояния
     place_view = State()  # просмотр информации о месте
     take_rating = State()  # оставляем 1-5 звезд
     take_comment = State()  # оставляем комментарий или пропускаем его
-    feedback_confirfm = State()  # подтверждение отзыва
+    feedback_confirm = State()  # подтверждение отзыва
 
 
-feedback_full_confirfm_text = """Ваш отзыв о месте {place} будет выглядеть так:
-
-{username}
+feedback_full_confirfm_text = """{username}
 {pretty_rating} {comment_date}
 {comment_text}"""
 
-feedback_rating_confirfm_text = """Ваш отзыв о месте {place} будет выглядеть так:
-
-{username}
-{pretty_rating} {comment_date}"""
+feedback_rating_confirfm_text = """{username}
+{pretty_rating}"""
 
 feedback_rating_inline = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -68,6 +68,26 @@ feedback_confirm_reply = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
+feedback_edit_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="✏️ Редактировать")],
+        [KeyboardButton(text="❌ Удалить")],
+        [KeyboardButton(text="Назад")],
+    ],
+    input_field_placeholder="Выберите пункт",
+    resize_keyboard=True,
+)
+
+feedback_visited_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="✏️ Оставить отзыв")],
+        [KeyboardButton(text="❌ Удалить отметку о посещении")],
+        [KeyboardButton(text="Назад")],
+    ],
+    input_field_placeholder="Выберите пункт",
+    resize_keyboard=True,
+)
+
 
 @router.message(Step.place_view, F.text == "Отметить это место как посещенное")
 async def rating(message: Message, state: FSMContext):
@@ -84,25 +104,42 @@ async def rating(message: Message, state: FSMContext):
 @router.callback_query(Step.take_rating, F.data == "back_to_place_view")
 async def back_from_feedback(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    place_name = data.get("current_place_name")
     await state.set_state(Step.place_view)
     await callback.message.delete()
 
-    place_info = await get_place_info_text(data.get("current_place_name"))
+    place_info = await get_place_info_text(place_name)
 
-    await callback.message.answer(place_info, reply_markup=place_view_reply)
+    await callback.message.answer(
+        place_info,
+        reply_markup=await place_view_smart_reply(callback.from_user.id, place_name),
+    )
     await callback.answer()
 
 
 @router.callback_query(Step.take_rating, F.data == "no_review_visit")
 async def no_review_visit(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
+    place_name = data.get("current_place_name")
+    tg_id = callback.from_user.id
+    place_name = data.get("current_place_name")
+    await delete_comment(commentator_tg_id=tg_id, place_name=place_name)
+
+    await add_comment(
+        commentator_tg_id=tg_id,
+        place_name=place_name,
+        text="",
+        rating="",
+    )
+    await callback.message.answer(f"Вы посетили {place_name} без оценки")
     await state.set_state(Step.place_view)
     await callback.message.delete()
-
-    place_info = await get_place_info_text(data.get("current_place_name"))
-
-    await callback.message.answer(place_info, reply_markup=place_view_reply_visited)
-    await callback.answer()  # тут надо послать данные в бд пользователя, в бд комментов ничего не заносим
+    place_info = await get_place_info_text(place_name)
+    await callback.message.answer(
+        place_info,
+        reply_markup=await place_view_smart_reply(callback.from_user.id, place_name),
+    )
+    await callback.answer()
 
 
 @router.callback_query(Step.take_rating, F.data.startswith("star_"))
@@ -124,15 +161,11 @@ async def handle_rating(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "skip_comment")
 async def feedback_rating_confirm(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(Step.feedback_confirfm)
+    await state.set_state(Step.feedback_confirm)
     data = await state.get_data()
+    await state.update_data(comment_text="")
     await callback.message.answer(
-        text=feedback_rating_confirfm_text.format(
-            place=data["current_place_name"],
-            username=callback.from_user.first_name,
-            pretty_rating="⭐" * data["user_rating"],
-            comment_date=date.today().strftime("%d.%m.%Y"),
-        ),
+        text=f"Ваша оценка места {data["current_place_name"]}: \n\n{"⭐" * data["user_rating"]}",
         reply_markup=feedback_confirm_reply,
     )
     await callback.answer()
@@ -140,23 +173,27 @@ async def feedback_rating_confirm(callback: CallbackQuery, state: FSMContext):
 
 @router.message(Step.take_comment)
 async def feedback_full_confirm(message: Message, state: FSMContext):
-    await state.set_state(Step.feedback_confirfm)
+    await state.set_state(Step.feedback_confirm)
     comment_text_input = message.text
     await state.update_data(comment_text=comment_text_input)
     data = await state.get_data()
+
+    full_review = feedback_full_confirfm_text.format(
+        username=message.from_user.first_name,
+        pretty_rating="⭐" * data["user_rating"],
+        comment_date=date.today().strftime("%d.%m.%Y"),
+        comment_text=comment_text_input,
+    )
+    await state.update_data(comment_text=full_review)
     await message.answer(
-        feedback_full_confirfm_text.format(
-            place=data["current_place_name"],
-            username=message.from_user.first_name,
-            pretty_rating="⭐" * data["user_rating"],
-            comment_date=date.today().strftime("%d.%m.%Y"),
-            comment_text=comment_text_input,
-        ),
+        text=f"Ваш отзыв о месте {data["current_place_name"]} будет выглядеть так:\n\n{full_review}",
         reply_markup=feedback_confirm_reply,
     )
 
 
-@router.message(Step.feedback_confirfm, F.text == "✏️ Редактировать")
+@router.message(
+    Step.feedback_confirm, F.text.in_(["✏️ Оставить отзыв", "✏️ Редактировать"])
+)
 async def rating(message: Message, state: FSMContext):
     await state.set_state(Step.take_rating)
     await message.answer(
@@ -169,31 +206,87 @@ async def rating(message: Message, state: FSMContext):
     await state.update_data(user_rating=None, comment_text=None)
 
 
-@router.message(Step.feedback_confirfm, F.text == "❌ Отмена")
+@router.message(Step.feedback_confirm, F.text.in_(["❌ Отмена", "Назад"]))
 async def back_from_feedback(message: Message, state: FSMContext):
     data = await state.get_data()
+    place_name = data.get("current_place_name")
     await state.set_state(Step.place_view)
-    place_info = await get_place_info_text(data.get("current_place_name"))
-    await message.answer(place_info, reply_markup=place_view_reply)
+    place_info = await get_place_info_text(place_name)
+    await message.answer(
+        place_info,
+        reply_markup=await place_view_smart_reply(message.from_user.id, place_name),
+    )
     await state.update_data(user_rating=None, comment_text=None)
 
 
-@router.message(Step.feedback_confirfm, F.text == "✅ Подтвердить")
+@router.message(Step.feedback_confirm, F.text == "✅ Подтвердить")
 async def confirm_feedback(message: Message, state: FSMContext):
     data = await state.get_data()
     tg_id = message.from_user.id
-    current_place_name = data.get("current_place_name")
+    place_name = data.get("current_place_name")
     user_rating = data.get("user_rating")
     comment_text = data.get("comment_text")
+    await delete_comment(commentator_tg_id=tg_id, place_name=place_name)
 
     await add_comment(
         commentator_tg_id=tg_id,
-        place_name=current_place_name,
+        place_name=place_name,
         text=comment_text,
         rating=user_rating,
     )
     await message.answer("✅ Отзыв успешно сохранен!")
-    place_info = await get_place_info_text(current_place_name)
-    await message.answer(place_info, reply_markup=place_view_reply_visited)
+    place_info = await get_place_info_text(place_name)
+    await message.answer(
+        place_info,
+        reply_markup=await place_view_smart_reply(message.from_user.id, place_name),
+    )
     await state.set_state(Step.place_view)
+    await state.update_data(user_rating=None, comment_text=None)
+
+
+@router.message(Step.place_view, F.text == "Место уже посещено ✅")
+async def show_existing_comment(message: Message, state: FSMContext):
+    await state.set_state(Step.feedback_confirm)
+    data = await state.get_data()
+    current_place_name = data.get("current_place_name")
+    tg_id = message.from_user.id
+
+    comments = await get_comments(
+        place_name=current_place_name, commentator_tg_id=tg_id
+    )
+    comment = comments[0]
+    if len(comment.comment_text) == 0 and len(str(comment.commentator_rating)) == 0:
+        text = f"Вы отметили место {current_place_name} как посещенное без отзыва. Вы можете удалить отметку о посещении или оставить отзыв"
+        await message.answer(text, reply_markup=feedback_visited_reply)
+    elif len(comment.comment_text) == 0:
+        text = (
+            f"Ваша оценка к месту {current_place_name}:\n\n"
+            f"{comment.commentator_rating * "⭐"}"
+        )
+        await message.answer(text, reply_markup=feedback_edit_reply)
+    else:
+        text = (
+            f"Ваш существующий отзыв к месту {current_place_name}:\n\n"
+            f"{comment.comment_text}"
+        )
+        await message.answer(text, reply_markup=feedback_edit_reply)
+
+
+@router.message(
+    Step.feedback_confirm, F.text.in_(["❌ Удалить", "❌ Удалить отметку о посещении"])
+)
+async def back_from_feedback(message: Message, state: FSMContext):
+    data = await state.get_data()
+    await state.set_state(Step.place_view)
+    place_name = data.get("current_place_name")
+    place_info = await get_place_info_text(place_name)
+    await delete_comment(
+        commentator_tg_id=message.from_user.id,
+        place_name=place_name,
+    )
+    await message.answer("Ваш отзыв успешно удален")
+    await message.answer(
+        place_info,
+        reply_markup=await place_view_smart_reply(message.from_user.id, place_name),
+    )
     await state.update_data(user_rating=None, comment_text=None)

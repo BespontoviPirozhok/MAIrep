@@ -18,7 +18,7 @@ class User(Base):
     __tablename__ = "users"
 
     user_id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id = mapped_column(BigInteger)
+    tg_id = mapped_column(BigInteger, primary_key=True)
     regist_date = mapped_column(Date)
     # comments = relationship("Comment", back_populates="user")
     # visited_places = relationship("VisitedPlace", back_populates="user")

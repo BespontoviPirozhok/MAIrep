@@ -81,13 +81,41 @@ async def add_comment(
         await session.commit()
 
 
+async def delete_comment(commentator_tg_id: int, place_name: str) -> None:
+    async with async_sessions() as session:
+        await session.execute(
+            delete(Comment).where(
+                and_(
+                    Comment.commentator_tg_id == commentator_tg_id,
+                    Comment.place_name == place_name,
+                )
+            )
+        )
+        await session.commit()
+
+
+async def has_comment(commentator_tg_id: int, place_name: str) -> bool:
+    async with async_sessions() as session:
+        result = await session.scalar(
+            select(Comment).where(
+                and_(
+                    Comment.commentator_tg_id == commentator_tg_id,
+                    Comment.place_name == place_name,
+                )
+            )
+        )
+        return result is not None
+
+
 async def get_comments(
-    place_name: Optional[str] = None,
+    place_name: Optional[str] = None, commentator_tg_id: Optional[int] = None
 ) -> List[Comment]:
     async with async_sessions() as session:
         query = select(Comment)
         if place_name:
             query = query.where(Comment.place_name == place_name)
+        if commentator_tg_id:
+            query = query.where(Comment.commentator_tg_id == commentator_tg_id)
         result = await session.scalars(query)
         return result.all()
 

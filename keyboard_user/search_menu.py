@@ -14,7 +14,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from keyboard_user.main_menu import return_to_user_menu, back_reply
 
-from database.requests import get_places, get_current_place
+from database.requests import get_places, get_current_place, has_comment
 
 router = Router()
 
@@ -25,29 +25,24 @@ class Step(StatesGroup):  # состояния
     place_view = State()  # просмотр информации о месте
 
 
-place_view_reply = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="Отметить это место как посещенное")
-        ],  # Если места не нашлось в списке посещенных у данного польщователя
-        [KeyboardButton(text="Посмотреть комментарии")],
-        [KeyboardButton(text="Назад")],
-    ],
-    resize_keyboard=True,
-    is_persistent=True,
-)
+async def place_view_smart_reply(tg_id: int, place_name: str):
+    # Добавляем await перед вызовом асинхронной функции
+    comment_exists = await has_comment(commentator_tg_id=tg_id, place_name=place_name)
 
-place_view_reply_visited = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="Место уже посещено ✅")
-        ],  # Если место уже есть среди посещенных в таблице пользователя
-        [KeyboardButton(text="Посмотреть комментарии")],
-        [KeyboardButton(text="Назад")],
-    ],
-    resize_keyboard=True,
-    is_persistent=True,
-)
+    if comment_exists:
+        top_button_text = "Место уже посещено ✅"
+    else:
+        top_button_text = "Отметить это место как посещенное"
+
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=top_button_text)],
+            [KeyboardButton(text="Посмотреть комментарии")],
+            [KeyboardButton(text="Назад")],
+        ],
+        resize_keyboard=True,
+        is_persistent=True,
+    )
 
 
 async def places():
@@ -130,7 +125,8 @@ async def place_chosen(callback: CallbackQuery, state: FSMContext):
     await state.update_data(current_place_name=callback.data)
     await callback.message.delete()
     await callback.message.answer(
-        await get_place_info_text(callback.data), reply_markup=place_view_reply
+        await get_place_info_text(callback.data),
+        reply_markup=await place_view_smart_reply(callback.from_user.id, callback.data),
     )
 
 
