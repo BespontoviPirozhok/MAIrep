@@ -14,14 +14,16 @@ async def fetch_json(url):
 
 
 class Place:
-    def __init__(self, name: str, address: str, category: str, code: str) -> None:
+    def __init__(
+        self, name: str, address: str, category: str, pretty_result: str
+    ) -> None:
         self.name = name
         self.address = address
         self.category = category
-        self.code = code
+        self.pretty_result = pretty_result
 
     def __repr__(self):
-        return self.code
+        return self.pretty_result
 
 
 async def map_search(request):
@@ -37,21 +39,21 @@ async def map_search(request):
 
         places_list = []
         for result in data.get("results", []):
-            name = f"'{result["title"]["text"]}'"
-            address = result["subtitle"]["text"]
-            category = result["tags"]
-            code = name + " " + address
+            name = result["title"]["text"]
+            address = (result["subtitle"]["text"]).split(" · ")[1]
+            category = (result["subtitle"]["text"]).split(" · ")[0]
+            pretty_result = f'{category} "{name}", {address}'
 
-            place = Place(name, address, category, code)
+            place = Place(name, address, category, pretty_result)
             places_list.append(place)
 
         # Вывод каждого элемента в отдельной строке
         for place in places_list:
-            print(place.code)
+            print(place.pretty_result)
         return places_list
 
     except (KeyError, IndexError, aiohttp.ClientError):
         return []
 
 
-asyncio.run(map_search("Верный волоколамское шоссе"))
+asyncio.run(map_search("Общежитие МАИ Башня"))
