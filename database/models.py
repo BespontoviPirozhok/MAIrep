@@ -29,10 +29,10 @@ class Place(Base):
     __tablename__ = "places"
 
     place_id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(30))
-    adress: Mapped[str] = mapped_column(String(200))
+    name: Mapped[str] = mapped_column(String(50))
+    categoty: Mapped[str] = mapped_column(String(30))
+    address: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(200))
-    summary_rating: Mapped[float] = mapped_column(Float)
     # comments = relationship("Comment", back_populates="place")
 
 
@@ -41,21 +41,19 @@ class Comment(Base):
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     commentator_tg_id = mapped_column(BigInteger)
-    place_name: Mapped[str] = mapped_column(String(30))
+    place_id: Mapped[int] = mapped_column(Integer)
     comment_text: Mapped[str] = mapped_column(String(200))
     commentator_rating: Mapped[int] = mapped_column(Integer)
     # user = relationship("User", back_populates="comments")
     # place = relationship("Place", back_populates="comments")
 
 
-class VisitedPlace(Base):
-    __tablename__ = "visited_places"
+class VisitedEvents(Base):
+    __tablename__ = "visited_events"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"), primary_key=True)
-    place_id: Mapped[int] = mapped_column(
-        ForeignKey("places.place_id"), primary_key=True
-    )
-    visit_date = mapped_column(Date)
+    visit_id: Mapped[int] = mapped_column(primary_key=True)
+    user_tg_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
+    review_text: Mapped[str] = mapped_column(String(200))
     # user = relationship("User", back_populates="visited_places")
     # place = relationship("Place", back_populates="visited_places")
 
