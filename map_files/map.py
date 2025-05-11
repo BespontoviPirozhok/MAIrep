@@ -1,5 +1,10 @@
 import aiohttp
 import asyncio
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+MAP_APIKEY = os.getenv("MAP_APIKEY")
 
 
 async def fetch_json(url):
@@ -21,7 +26,7 @@ class Place:
 
 async def map(request):
     BASE_URL = "https://suggest-maps.yandex.ru/v1/suggest"
-    apikey = "03366a1f-b153-4a39-a9ae-e110d49be220"
+    apikey = MAP_APIKEY
     lang = "ru"
     results = 5
 
