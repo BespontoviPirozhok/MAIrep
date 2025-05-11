@@ -26,10 +26,8 @@ class Step(StatesGroup):  # состояния
     place_view = State()  # просмотр информации о месте
 
 
-async def place_view_smart_reply(tg_id: int, place_name: str):
-    comment_exists = len(
-        await get_comments(commentator_tg_id=tg_id, place_name=place_name)
-    )
+async def place_view_smart_reply(tg_id: int, place_id: str):
+    comment_exists = len(await get_comments(commentator_tg_id=tg_id, place_id=place_id))
     if comment_exists != 0:
         top_button_text = "Место уже посещено ✅"
     else:
@@ -116,7 +114,6 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     # Достаём номер места из callback_data
     place_index = int(callback.data.split("_")[-1]) - 1  # Индексация с 0
 
-    # Получаем список мест из FSM
     data = await state.get_data()
     places_list = data["places_list"]
 
@@ -128,13 +125,21 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
             category=current_place.category,
             address=current_place.address,
         )
-
-    print(
-        await get_place_info_text(
-            temp_place_name=current_place.name, temp_address=current_place.address
-        )
+    place_id = (
+        await get_place(name=current_place.name, address=current_place.address)
+    ).place_id
+    place_info = await get_place_info_text(
+        temp_place_name=current_place.name, temp_address=current_place.address
     )
-    awa
+
+    print(place_info)  # отладочная печать в консоль
+    await state.set_state(Step.place_view)
+    await callback.message.answer(
+        place_info,
+        reply_markup=await place_view_smart_reply(
+            tg_id=callback.from_user.id, place_id=place_id
+        ),
+    )
     await callback.answer()
 
 
