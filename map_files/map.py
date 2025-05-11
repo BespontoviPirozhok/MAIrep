@@ -30,23 +30,28 @@ async def map(request):
     lang = "ru"
     results = 5
 
-    data = await fetch_json(
-        f"{BASE_URL}?apikey={apikey}&text={request}&results={results}&lang={lang}"
-    )
+    try:
+        data = await fetch_json(
+            f"{BASE_URL}?apikey={apikey}&text={request}&results={results}&lang={lang}"
+        )
 
-    list = []
-    for i in range(5):
-        name = data["results"][i]["title"]["text"]
-        address = data["results"][i]["subtitle"]["text"]
-        category = data["results"][i]["tags"]
-        code = name + " " + address
+        places_list = []
+        for result in data.get("results", []):
+            name = f"'{result["title"]["text"]}'"
+            address = result["subtitle"]["text"]
+            category = result["tags"]
+            code = name + " " + address
 
-        place = Place(name, address, category, code)
-        list.append(place)
+            place = Place(name, address, category, code)
+            places_list.append(place)
 
-    print(repr(list))
+        # Вывод каждого элемента в отдельной строке
+        for place in places_list:
+            print(place.code)
+        return places_list
 
-    return list
+    except (KeyError, IndexError, aiohttp.ClientError):
+        return []
 
 
-asyncio.run(map("Метрополис"))
+asyncio.run(map("Верный волоколамское шоссе"))
