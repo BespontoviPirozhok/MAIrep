@@ -44,21 +44,16 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
     )
 
 
-async def places_search_view(search_request: str, message: Message, state: FSMContext):
-    all_places = await map_search(search_request)
-    await state.update_data(search_request=search_request)
+async def places_search_view(places_list: list, message: Message, state: FSMContext):
 
-    if not all_places:
+    if not places_list:
         await message.answer(
             text="По вашему запросу ничего не нашлось, введите другой запрос",
             reply_markup=back_reply,
         )
         return
 
-    # Сохраняем все места в FSM (чтобы потом достать по номеру)
-    await state.update_data(places_list=all_places)
-
-    for index, place in enumerate(all_places, start=1):
+    for index, place in enumerate(places_list, start=1):
         place_list_inline = InlineKeyboardBuilder()
         place_list_inline.add(
             InlineKeyboardButton(
@@ -76,8 +71,8 @@ async def places_search_view(search_request: str, message: Message, state: FSMCo
     )
 
 
-async def get_place_info_text(temp_place_name: str, temp_address: str) -> str:
-    temp_place = await get_place(name=temp_place_name, address=temp_address)
+async def get_place_info_text(place_id: int) -> str:
+    temp_place = await get_place(place_id=place_id)
     return (
         f"{temp_place.name}\n\n"
         f"Категория: {temp_place.category}\n"
@@ -92,8 +87,7 @@ async def get_place_info_text(temp_place_name: str, temp_address: str) -> str:
 async def search(message: Message, state: FSMContext):
     await state.set_state(Step.search_input)
     await message.answer(
-        """Введите название места, котрое хотите найти.
-Ваш запрос должен содержать минимум 2 слова""",
+        """Введите название места, котрое хотите найти:""",
         reply_markup=back_reply,
     )
 
@@ -106,7 +100,9 @@ async def exit(message: Message, state: FSMContext):
 
 @router.message(Step.search_input)
 async def inline_places(message: Message, state: FSMContext):
-    await places_search_view(message.text, message, state)
+    search_places_list = await map_search(message.text)
+    await state.update_data(places_list=search_places_list)
+    await places_search_view(search_places_list, message, state)
 
 
 @router.callback_query(F.data.startswith("place_select_"))
@@ -114,7 +110,7 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Step.place_view)
     place_index = int(callback.data.split("_")[-1]) - 1
     data = await state.get_data()
-    places_list = data["places_list"]
+    places_list = data.get("places_list")
     current_place = places_list[place_index]
     if not await get_place(name=current_place.name, address=current_place.address):
         await add_place(
@@ -125,10 +121,8 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     place_id = (
         await get_place(name=current_place.name, address=current_place.address)
     ).place_id
-    place_info = await get_place_info_text(
-        temp_place_name=current_place.name, temp_address=current_place.address
-    )
-
+    await state.update_data(place_id=place_id)
+    place_info = await get_place_info_text(place_id=place_id)
     await state.set_state(Step.place_view)
     await callback.message.answer(
         place_info,
@@ -143,5 +137,6 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
 async def back_to_places_list(message: Message, state: FSMContext):
     await state.set_state(Step.search_input)
     data = await state.get_data()
-    search_request = data["search_request"]
-    await places_search_view(search_request, message, state)
+    places_list = data.get("places_list")
+    await places_search_view(places_list, message, state)
+    await state.update_data(current_place=None)
