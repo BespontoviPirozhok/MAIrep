@@ -46,6 +46,7 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
 
 async def places_search_view(search_request: str, message: Message, state: FSMContext):
     all_places = await map_search(search_request)
+    await state.update_data(search_request=search_request)
 
     if not all_places:
         await message.answer(
@@ -111,14 +112,10 @@ async def inline_places(message: Message, state: FSMContext):
 @router.callback_query(F.data.startswith("place_select_"))
 async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Step.place_view)
-    # Достаём номер места из callback_data
-    place_index = int(callback.data.split("_")[-1]) - 1  # Индексация с 0
-
+    place_index = int(callback.data.split("_")[-1]) - 1
     data = await state.get_data()
     places_list = data["places_list"]
-
     current_place = places_list[place_index]
-    print(current_place)
     if not await get_place(name=current_place.name, address=current_place.address):
         await add_place(
             name=current_place.name,
@@ -132,7 +129,6 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
         temp_place_name=current_place.name, temp_address=current_place.address
     )
 
-    print(place_info)  # отладочная печать в консоль
     await state.set_state(Step.place_view)
     await callback.message.answer(
         place_info,
@@ -146,3 +142,6 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
 @router.message(Step.place_view, F.text == "Назад")
 async def back_to_places_list(message: Message, state: FSMContext):
     await state.set_state(Step.search_input)
+    data = await state.get_data()
+    search_request = data["search_request"]
+    await places_search_view(search_request, message, state)
