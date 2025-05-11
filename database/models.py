@@ -30,7 +30,7 @@ class Place(Base):
 
     place_id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(50))
-    categoty: Mapped[str] = mapped_column(String(30))
+    category: Mapped[str] = mapped_column(String(30))
     address: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(200))
     # comments = relationship("Comment", back_populates="place")

@@ -39,18 +39,44 @@ async def get_user(tg_id: int) -> Optional[User]:
         return await session.scalar(select(User).where(User.tg_id == tg_id))
 
 
+# таблица мест
+async def add_place(
+    name: str,
+    category: str,
+    address: str,
+    description: Optional[str] = "",
+) -> None:
+    async with async_sessions() as session:
+        session.add(
+            Place(
+                name=name,
+                category=category,
+                address=address,
+                description=description,
+            )
+        )
+        await session.commit()
+
+
 async def get_place(
     place_id: Optional[int] = None,
     name: Optional[str] = None,
     address: Optional[str] = None,
-) -> List[Place]:
+) -> Optional[Place]:
     async with async_sessions() as session:
-        query = select(Comment)
+        query = select(Place)  # Ищем места, а не комментарии
+
         if place_id:
-            query = query.where(Comment.place_id == place_id)
+            query = query.where(Place.place_id == place_id)
+        if name:
+            query = query.where(Place.name == name)
+        if address:
+            query = query.where(Place.address == address)
 
         result = await session.scalars(query)
-        return result.all()
+        return (
+            result.first()
+        )  # функция раньше возвращала список мест, но де-факто каждое место уникально => сейчас функция выводит первое место из списка
 
 
 # Таблица комментариев
@@ -85,19 +111,6 @@ async def delete_comment(commentator_tg_id: int, place_id: int) -> None:
         await session.commit()
 
 
-async def has_comment(commentator_tg_id: int, place_id: int) -> bool:
-    async with async_sessions() as session:
-        result = await session.scalar(
-            select(Comment).where(
-                and_(
-                    Comment.commentator_tg_id == commentator_tg_id,
-                    Comment.place_id == place_id,
-                )
-            )
-        )
-        return result is not None
-
-
 async def get_comments(
     place_id: Optional[int] = None, commentator_tg_id: Optional[int] = None
 ) -> List[Comment]:
@@ -111,7 +124,7 @@ async def get_comments(
         return result.all()
 
 
-# тут надо конкретно переделывать функцию получения статистики
+# тут надо конкретно переделывать функцию получения статистики, а может полностью ее убирать
 async def get_user_stats(
     tg_id: int,
 ) -> "UserInfo":  # перепиши, чтобы можно было получать дату регистрации
