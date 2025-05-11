@@ -23,7 +23,6 @@ from keyboard_user.main_menu import error_rt
 # ТОКЕН И БД
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
-DATABASE = os.getenv("DATABASE")
 
 # РОУТЕРЫ
 dp = Dispatcher()
