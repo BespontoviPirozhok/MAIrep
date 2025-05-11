@@ -60,10 +60,28 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
                 text=f"Показать это место", callback_data=f"place_select_{index}"
             )
         )
-
-        await message.answer(
-            text=place.pretty_result, reply_markup=place_list_inline.as_markup()
-        )
+        message.from_user.id
+        if await get_place(name=place.name, address=place.address):
+            place_id = (
+                await get_place(name=place.name, address=place.address)
+            ).place_id
+            if (
+                len(
+                    await get_comments(
+                        commentator_tg_id=message.from_user.id, place_id=place_id
+                    )
+                )
+                != 0
+            ):
+                await message.answer(
+                    text=f"{place.pretty_result} ✅",
+                    reply_markup=place_list_inline.as_markup(),
+                )
+        else:
+            await message.answer(
+                text=place.pretty_result,
+                reply_markup=place_list_inline.as_markup(),
+            )
 
     await message.answer(
         text="Не нашли то, что искали? Попробуйте ввести запрос по-другому",
