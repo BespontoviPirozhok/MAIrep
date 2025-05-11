@@ -24,6 +24,7 @@ back_reply = ReplyKeyboardMarkup(
         [KeyboardButton(text="Назад")],
     ],
     resize_keyboard=True,
+    is_persistent=True,
 )
 
 
