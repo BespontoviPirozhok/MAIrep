@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-engine = create_async_engine(os.getenv("DATABASE"))
+DB = os.getenv("DATABASE")
+engine = create_async_engine(DB)
 
 async_sessions = async_sessionmaker(engine)
 
