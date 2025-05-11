@@ -30,7 +30,7 @@ async def map_search(request):
     BASE_URL = "https://suggest-maps.yandex.ru/v1/suggest"
     apikey = MAP_APIKEY
     lang = "ru"
-    results = 5
+    results = 4
 
     try:
         data = await fetch_json(

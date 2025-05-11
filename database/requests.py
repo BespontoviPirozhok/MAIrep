@@ -86,7 +86,7 @@ async def get_place(
 # Таблица комментариев
 async def add_comment(
     commentator_tg_id: int,
-    place_name: str,
+    place_id: int,
     text: str,
     rating: int,
 ) -> None:
@@ -95,7 +95,7 @@ async def add_comment(
             Comment(
                 commentator_tg_id=commentator_tg_id,
                 comment_text=text,
-                place_name=place_name,
+                place_id=place_id,
                 commentator_rating=rating,
             )
         )
