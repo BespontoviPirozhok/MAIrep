@@ -18,12 +18,11 @@ class Base(AsyncAttrs, DeclarativeBase):
 class User(Base):
     __tablename__ = "users"
 
-    user_id: Mapped[int] = mapped_column(primary_key=True)
-    tg_id = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    tg_id = mapped_column(BigInteger, unique=True)
     regist_date = mapped_column(Date)
-    user_status: Mapped[int] = mapped_column(
-        Integer
-    )  # 0 - обычный пользователь, 1 - менеджер, 2 - админ
+    user_status: Mapped[int] = mapped_column(Integer, default=0)
+    # 0 - обычный пользователь (по умолчанию), 1 - менеджер, 2 - админ
     # comments = relationship("Comment", back_populates="user")
     # visited_places = relationship("VisitedPlace", back_populates="user")
 

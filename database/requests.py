@@ -25,12 +25,16 @@ class UserInfo:
 
 
 # таблица пользователей - нужно указать статус, типа 0 - обычный пользователь, 1 - менеджер, 2 - админ
-async def set_user(tg_id: int, regist_date: date) -> None:
+async def set_user(
+    tg_id: int, regist_date: date, user_status: Optional[int] = 0
+) -> None:
     async with async_sessions() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
         if not user:
-            session.add(User(tg_id=tg_id, regist_date=regist_date))
+            session.add(
+                User(tg_id=tg_id, regist_date=regist_date, user_status=user_status)
+            )
             await session.commit()
 
 
@@ -144,8 +148,6 @@ async def get_user_stats(
 
 
 # таблица мероприятий
-
-
 async def get_visits(user_tg_id: int) -> List[VisitedEvents]:
     async with async_sessions() as session:
         query = select(VisitedEvents).where(VisitedEvents.user_tg_id == user_tg_id)

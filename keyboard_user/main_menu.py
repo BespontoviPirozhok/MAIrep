@@ -61,7 +61,9 @@ def pretty_date(date_str: str) -> str:
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await rq.set_user(message.from_user.id, datetime.datetime.now().date())
+    await rq.set_user(
+        tg_id=message.from_user.id, regist_date=datetime.datetime.now().date()
+    )
     """Красивый ответ на /start"""
 
     now = datetime.datetime.now()
