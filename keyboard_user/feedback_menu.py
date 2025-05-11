@@ -11,7 +11,6 @@ from aiogram import Router
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from datetime import date
 from database.requests import (
     add_comment,
@@ -27,7 +26,7 @@ router = Router()
 class Step(StatesGroup):  # состояния
     place_view = State()  # просмотр информации о месте
     take_rating = State()  # оставляем 1-5 звезд
-    take_comment = State()  # оставляем комментарий или пропускаем его
+    take_comment = State()  # оставляем комментарий
     feedback_confirm = State()  # подтверждение отзыва
 
 
@@ -275,7 +274,7 @@ async def show_existing_comment(message: Message, state: FSMContext):
 @router.message(
     Step.feedback_confirm, F.text.in_(["❌ Удалить", "❌ Удалить отметку о посещении"])
 )
-async def back_from_feedback(message: Message, state: FSMContext):
+async def delete_review(message: Message, state: FSMContext):
     data = await state.get_data()
     await state.set_state(Step.place_view)
     place_name = data.get("current_place_name")
