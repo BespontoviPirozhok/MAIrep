@@ -14,22 +14,23 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from keyboard_user.main_menu import return_to_user_menu, back_reply
 
-from database.requests import get_places, get_current_place, has_comment
+from database.requests import get_place, add_place, get_comments
+
+from map_and_events.map import map_search
 
 router = Router()
 
 
 class Step(StatesGroup):  # состояния
-    search_input = State()  # поисковая строка
-    places_list = State()  # список мест согласно выдаче
+    search_input = State()  # поисковая строка и показ мест
     place_view = State()  # просмотр информации о месте
 
 
 async def place_view_smart_reply(tg_id: int, place_name: str):
-    # Добавляем await перед вызовом асинхронной функции
-    comment_exists = await has_comment(commentator_tg_id=tg_id, place_name=place_name)
-
-    if comment_exists:
+    comment_exists = len(
+        await get_comments(commentator_tg_id=tg_id, place_name=place_name)
+    )
+    if comment_exists != 0:
         top_button_text = "Место уже посещено ✅"
     else:
         top_button_text = "Отметить это место как посещенное"
@@ -45,26 +46,45 @@ async def place_view_smart_reply(tg_id: int, place_name: str):
     )
 
 
-async def places():
-    all_places = await get_places()
-    places_list_inline = InlineKeyboardBuilder()
-    for place in all_places:
-        places_list_inline.row(
-            InlineKeyboardButton(text=place.name, callback_data=place.name)
+async def places_search_view(search_request: str, message: Message, state: FSMContext):
+    all_places = await map_search(search_request)
+
+    if not all_places:
+        await message.answer(
+            text="По вашему запросу ничего не нашлось, введите другой запрос",
+            reply_markup=back_reply,
         )
-    places_list_inline.row(
-        InlineKeyboardButton(text="Назад", callback_data="back_to_search")
+        return
+
+    # Сохраняем все места в FSM (чтобы потом достать по номеру)
+    await state.update_data(places_list=all_places)
+
+    for index, place in enumerate(all_places, start=1):
+        place_list_inline = InlineKeyboardBuilder()
+        place_list_inline.add(
+            InlineKeyboardButton(
+                text=f"Показать это место", callback_data=f"place_select_{index}"
+            )
+        )
+
+        await message.answer(
+            text=place.pretty_result, reply_markup=place_list_inline.as_markup()
+        )
+
+    await message.answer(
+        text="Не нашли то, что искали? Попробуйте ввести запрос по-другому",
+        reply_markup=back_reply,
     )
-    return places_list_inline
 
 
-async def get_place_info_text(place_name: str) -> str:
-    place = await get_current_place(place_name)
+async def get_place_info_text(temp_place_name: str, temp_address: str) -> str:
+    temp_place = await get_place(name=temp_place_name, address=temp_address)
     return (
-        f"{place.name}\n\n"
-        f"Средняя оценка: {place.summary_rating}\n\n"
-        f"Адрес: {place.adress}\n"
-        f"Описание: {place.description}\n"
+        f"{temp_place.name}\n\n"
+        f"Категория: {temp_place.category}\n"
+        # f"Средняя оценка: {place.summary_rating}\n\n"
+        f"Адрес: {temp_place.address}\n"
+        f"Описание: {temp_place.description}\n"
         # f"{place_data['summary']}"
     )
 
@@ -73,8 +93,8 @@ async def get_place_info_text(place_name: str) -> str:
 async def search(message: Message, state: FSMContext):
     await state.set_state(Step.search_input)
     await message.answer(
-        """Введите название места, например:
-- Москва (пока работает только это)""",
+        """Введите название места, котрое хотите найти.
+Ваш запрос должен содержать минимум 2 слова""",
         reply_markup=back_reply,
     )
 
@@ -82,62 +102,42 @@ async def search(message: Message, state: FSMContext):
 @router.message(Step.search_input, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu("Операция отменена", message)
-
-
-# ---------- Обработка ввода "Москва" ----------, тут надо сделать запрос в карты и потом уже чето из них получать
-@router.message(Step.search_input, F.text.casefold() == "москва")
-async def inline_places(message: Message, state: FSMContext):
-    await state.set_state(Step.places_list)
-    await message.answer("Ищем место на картах 👀", reply_markup=ReplyKeyboardRemove())
-    keyboard = await places()
-    await message.answer("Выберите место из списка:", reply_markup=keyboard.as_markup())
-
-
-async def search_request(message: Message, state: FSMContext):
-    await state.set_state(Step.places_list)
-    await inline_places(message, state)
+    await return_to_user_menu("Вы вернулись в меню", message)
 
 
 @router.message(Step.search_input)
-async def unknown_city(message: Message, state: FSMContext):
-    await message.answer(
-        "Пока поддерживается только поиск по Москве. Попробуйте ввести 'Москва'"
-    )
+async def inline_places(message: Message, state: FSMContext):
+    await places_search_view(message.text, message, state)
 
 
-@router.callback_query(Step.places_list)
-async def place_chosen(callback: CallbackQuery, state: FSMContext):
-    if callback.data == "back_to_search":
-        await state.set_state(Step.search_input)
-        await callback.message.edit_text(
-            """Введите название места, например:
-        - Москва (пока работает только это)"""
-        )
-        await callback.message.answer(
-            "Вы вернулись к поиску:",
-            reply_markup=back_reply,
-        )
-        await callback.answer()
-        return
-
+@router.callback_query(F.data.startswith("place_select_"))
+async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Step.place_view)
-    await state.update_data(current_place_name=callback.data)
-    await callback.message.delete()
-    await callback.message.answer(
-        await get_place_info_text(callback.data),
-        reply_markup=await place_view_smart_reply(callback.from_user.id, callback.data),
+    # Достаём номер места из callback_data
+    place_index = int(callback.data.split("_")[-1]) - 1  # Индексация с 0
+
+    # Получаем список мест из FSM
+    data = await state.get_data()
+    places_list = data["places_list"]
+
+    current_place = places_list[place_index]
+    print(current_place)
+    if not await get_place(name=current_place.name, address=current_place.address):
+        await add_place(
+            name=current_place.name,
+            category=current_place.category,
+            address=current_place.address,
+        )
+
+    print(
+        await get_place_info_text(
+            temp_place_name=current_place.name, temp_address=current_place.address
+        )
     )
+    awa
+    await callback.answer()
 
 
 @router.message(Step.place_view, F.text == "Назад")
 async def back_to_places_list(message: Message, state: FSMContext):
-    await state.set_state(Step.places_list)
-    await message.answer(
-        "Смотрим интересные места...", reply_markup=ReplyKeyboardRemove()
-    )
-    keyboard = await places()
-    await message.answer(
-        "Выберите место из списка:",
-        reply_markup=keyboard.as_markup(),
-    )
+    await state.set_state(Step.search_input)
