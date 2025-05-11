@@ -34,26 +34,28 @@ async def map_search(request):
 
     try:
         data = await fetch_json(
-            f"{BASE_URL}?apikey={apikey}&text={request}&results={results}&lang={lang}"
+            f"{BASE_URL}?apikey={apikey}&highlight=0&types=biz&text={request}&results={results}&lang={lang}"
         )
-
         places_list = []
+
         for result in data.get("results", []):
             name = result["title"]["text"]
-            address = (result["subtitle"]["text"]).split(" · ")[1]
-            category = (result["subtitle"]["text"]).split(" · ")[0]
-            pretty_result = f'{category} "{name}",\n{address}'
+            if " · " in (result["subtitle"]["text"]):
+                address = (result["subtitle"]["text"]).split(" · ")[1]
+                category = (result["subtitle"]["text"]).split(" · ")[0]
+                pretty_result = f'{category} "{name}",\n{address}'
+            else:
+                address = result["subtitle"]["text"]
+                category = ""
+                pretty_result = f'"{name}",\n{address}'
+                print(result)
+            places_list.append(Place(name, address, category, pretty_result))
 
-            place = Place(name, address, category, pretty_result)
-            places_list.append(place)
-
-        # Тестировочный вывод каждого элемента в отдельной строке
-        for place in places_list:
-            print(place)
         return places_list
 
-    except (KeyError, IndexError, aiohttp.ClientError):
+    except (KeyError, IndexError, aiohttp.ClientError) as e:
+        print(e)
         return []
 
 
-# asyncio.run(map_search("Верный Щелково"))
+# asyncio.run(map_search("маи война"))
