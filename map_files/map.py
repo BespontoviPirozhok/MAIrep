@@ -24,7 +24,7 @@ class Place:
         return self.code
 
 
-async def map(request):
+async def map_search(request):
     BASE_URL = "https://suggest-maps.yandex.ru/v1/suggest"
     apikey = MAP_APIKEY
     lang = "ru"
@@ -54,4 +54,4 @@ async def map(request):
         return []
 
 
-asyncio.run(map("Верный волоколамское шоссе"))
+asyncio.run(map_search("Верный волоколамское шоссе"))
