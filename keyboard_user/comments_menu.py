@@ -12,10 +12,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from datetime import date
-from database.models import async_sessions, VisitedPlace, Comment
-from database.requests import get_place_by_id, get_comments
-from .search_menu import place_view_reply, place_view_reply_visited, get_place_info_text
+from database.requests import get_comments
+from .search_menu import place_view_smart_reply, get_place_info_text
 from .main_menu import pretty_date, back_reply
 
 router = Router()
@@ -29,42 +27,37 @@ class Step(StatesGroup):  # состояния
 @router.message(Step.сomments_list, F.text == "Назад")
 async def back_from_comments(message: Message, state: FSMContext):
     await state.set_state(Step.place_view)
+    data = await state.get_data()
+    place_id = data.get("place_id")
+    place_info = await get_place_info_text(place_id=place_id)
     await message.answer(
-        "Вы вернулись к информации о месте.", reply_markup=place_view_reply
+        place_info,
+        reply_markup=await place_view_smart_reply(
+            tg_id=message.from_user.id, place_id=place_id
+        ),
     )
-
-
-# @router.message(Step.place_view, F.text == "Посмотреть комментарии") #старая версия показа комментов - показываются сразу все комменты
-# async def show_comments(message: Message, state: FSMContext):
-#     data = await state.get_data()
-#     place = data.get("current_place")
-#     await state.set_state(Step.сomments_list)
-#     for comment, (comment_user, comment_date) in places_data[place]["comments"].items():
-#         await message.answer(
-#             f"{comment_user}, {beautiful_date(comment_date)}\n{comment}",
-#             reply_markup=back_reply,
-#         )
 
 
 @router.message(Step.place_view, F.text == "Посмотреть комментарии")
 async def show_comments(message: Message, state: FSMContext):
     data = await state.get_data()
-    place_id = data.get("current_place_id")
+    place_id = data.get("place_id")
     await state.set_state(Step.сomments_list)
 
     # Получаем и сортируем комментарии
-    comments = await get_comments(place_id=place_id)
-    all_comments = sorted(
-        comments,
-        key=lambda x: x.comment_date,  # Сортировка по дате (кортеж (год, месяц, день))
-        reverse=True,
-    )
+    raw_comments = await get_comments(place_id=place_id)
+    filtered_comments = [c for c in raw_comments if c.comment_text.strip()]
+    all_comments = filtered_comments
 
-    # Инициализируем пагинацию
-    await state.update_data(all_comments=all_comments, comment_offset=0)
+    if not all_comments:
+        await message.answer("🧑💻 Никто еще не написал комментарий")
 
-    # Отправляем первую порцию
-    await show_more_comments(message, state)
+    else:
+        # Инициализируем пагинацию
+        await state.update_data(all_comments=all_comments, comment_offset=0)
+
+        # Отправляем первую порцию
+        await show_more_comments(message, state)
 
 
 async def show_more_comments(message: Message, state: FSMContext):
@@ -77,9 +70,9 @@ async def show_more_comments(message: Message, state: FSMContext):
     comments_batch = all_comments[offset : offset + BATCH_SIZE]
 
     # Отправляем комментарии
-    for comment, (text, date_tuple) in comments_batch:
+    for comment in comments_batch:
         await message.answer(
-            f"{text}, {pretty_date(date_tuple)}\n{comment}",
+            f"{comment.comment_text}",
             reply_markup=(
                 ReplyKeyboardRemove()
                 if offset + BATCH_SIZE >= len(all_comments)
