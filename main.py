@@ -37,9 +37,9 @@ dp.include_router(error_rt)
 
 
 async def main() -> None:
-    await async_main()
+    await async_main()  # Запуск БД
     bot = Bot(TOKEN)
-    await dp.start_polling(bot)
+    await dp.start_polling(bot)  # Запуск бота
 
 
 if __name__ == "__main__":  # Запуск бота
