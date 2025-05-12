@@ -98,7 +98,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
             ),
         )
     await message.answer(
-        """Введите название места, которое хотите найти""",
+        """В списке нет нужного места? Попробуйте изменить свой запрос.""",
         reply_markup=back_reply,
     )
 
