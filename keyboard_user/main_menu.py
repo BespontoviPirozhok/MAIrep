@@ -5,8 +5,9 @@ from aiogram.filters import CommandStart
 import datetime
 import database.requests as rq
 
-from database.requests import get_user
-from roles.admin_menu import admin_check, admin_main_menu_reply
+from database.requests import get_user, set_user
+from roles.permissions import admin_check
+from roles.admin_menu import admin_main_menu_reply
 
 router = Router()
 error_rt = Router()
@@ -38,7 +39,7 @@ async def return_to_user_menu(
     msg: str,
     message: Message,
 ) -> None:
-    if admin_check(tg_id):
+    if await admin_check(tg_id):
         await message.answer(
             msg,
             reply_markup=admin_main_menu_reply,
@@ -73,7 +74,7 @@ def pretty_date(date_str: str) -> str:
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     user_tg_id = message.from_user.id
-    await rq.set_user(tg_id=user_tg_id, regist_date=datetime.datetime.now().date())
+    await set_user(tg_id=user_tg_id, regist_date=datetime.datetime.now().date())
     """Красивый ответ на /start"""
 
     now = datetime.datetime.now()
