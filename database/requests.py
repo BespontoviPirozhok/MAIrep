@@ -9,9 +9,9 @@ from .models import async_sessions
 from .models import User, Place, Comment, VisitedEvents
 
 
-# таблица пользователей - нужно указать статус, типа 0 - обычный пользователь, 1 - менеджер, 2 - админ
+# таблица пользователей - статус 0 - ограниченный пользователь, 1 - обычный пользователь, 2 - менеджер, 3 - админ
 async def set_user(
-    tg_id: int, regist_date: date, user_status: Optional[int] = 0
+    tg_id: int, regist_date: date, user_status: Optional[int] = 1
 ) -> None:
     async with async_sessions() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
