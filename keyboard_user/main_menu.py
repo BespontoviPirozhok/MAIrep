@@ -3,11 +3,9 @@ from aiogram import Router
 from aiogram.filters import CommandStart
 
 import datetime
-import database.requests as rq
 
 from database.requests import get_user, set_user
-from roles.permissions import admin_check
-from roles.admin_menu import admin_main_menu_reply
+from roles.roles_main import admin_check
 
 router = Router()
 error_rt = Router()
@@ -19,6 +17,21 @@ main_menu_reply = ReplyKeyboardMarkup(
             KeyboardButton(text="🏝️ Поиск мероприятий"),
         ],
         [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🤖 Чат с ИИ")],
+    ],
+    is_persistent=True,
+    input_field_placeholder="Выберите пункт",
+)
+
+admin_menu_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text="🔍 Поиск мест"),
+            KeyboardButton(text="🏝️ Поиск мероприятий"),
+        ],
+        [
+            KeyboardButton(text="Ⓜ️ Админ-меню"),
+            KeyboardButton(text="🤖 Чат с ИИ"),
+        ],
     ],
     is_persistent=True,
     input_field_placeholder="Выберите пункт",
@@ -42,7 +55,7 @@ async def return_to_user_menu(
     if await admin_check(tg_id):
         await message.answer(
             msg,
-            reply_markup=admin_main_menu_reply,
+            reply_markup=admin_menu_reply,
         )
     else:
         await message.answer(

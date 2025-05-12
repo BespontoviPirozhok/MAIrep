@@ -14,7 +14,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from keyboard_user.main_menu import return_to_user_menu, back_reply
 
-from roles.permissions import user_check, manager_check
+from roles.roles_main import user_check, manager_check
 
 from database.requests import get_place, add_place, get_comments
 
