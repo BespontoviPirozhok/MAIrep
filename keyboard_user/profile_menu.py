@@ -14,6 +14,7 @@ from aiogram import F
 from datetime import date
 
 from .main_menu import return_to_user_menu, pretty_date
+from database.requests import get_user
 
 router = Router()
 
