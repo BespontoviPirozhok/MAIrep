@@ -36,7 +36,7 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
     keyboard = []
     keyboard.append([KeyboardButton(text=top_button_text)])
     if await manager_check(tg_id):
-        keyboard.append([KeyboardButton(text="Редактировать место")])
+        keyboard.append([KeyboardButton(text="✏️ Изменить описание места")])
 
     keyboard.extend(
         [
