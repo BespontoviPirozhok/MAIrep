@@ -77,6 +77,11 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
                     text=f"{place.pretty_result} ✅",
                     reply_markup=place_list_inline.as_markup(),
                 )
+            else:
+                await message.answer(
+                    text=f"{place.pretty_result} 🌐",
+                    reply_markup=place_list_inline.as_markup(),
+                )
         else:
             await message.answer(
                 text=place.pretty_result,

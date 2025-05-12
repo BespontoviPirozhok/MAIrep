@@ -1,5 +1,4 @@
 import aiohttp
-import asyncio
 import os
 from dotenv import load_dotenv
 
@@ -56,6 +55,3 @@ async def map_search(request):
     except (KeyError, IndexError, aiohttp.ClientError) as e:
         print(e)
         return []
-
-
-# asyncio.run(map_search("маи война"))
