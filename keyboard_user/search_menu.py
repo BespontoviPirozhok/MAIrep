@@ -176,7 +176,9 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
         place_in_db = await get_place(
             name=current_place.name, address=current_place.address
         )
-        # await callback.message.answer()
+        await callback.message.answer(
+            f"Место {current_place.name} добавлено в базу данных"
+        )
 
     place_id = place_in_db.place_id
     await state.update_data(place_id=place_id)
