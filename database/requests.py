@@ -9,21 +9,6 @@ from .models import async_sessions
 from .models import User, Place, Comment, VisitedEvents
 
 
-# два класса ниже я не думаю, что нужны, но пока оставлю
-@dataclass
-class Place_Class:
-    name: str
-    description: str
-    rating: float
-
-
-@dataclass
-class UserInfo:
-    comments: List[str]
-    places: List[Place_Class]
-    reg_date: date
-
-
 # таблица пользователей - нужно указать статус, типа 0 - обычный пользователь, 1 - менеджер, 2 - админ
 async def set_user(
     tg_id: int, regist_date: date, user_status: Optional[int] = 0
@@ -38,9 +23,26 @@ async def set_user(
             await session.commit()
 
 
-async def get_user(tg_id: int) -> Optional[User]:
+async def get_user(
+    tg_id: int = None,
+    username: Optional[str] = None,
+    regist_date: Optional[date] = None,
+    user_status: Optional[int] = None,
+) -> Optional[User]:
     async with async_sessions() as session:
-        return await session.scalar(select(User).where(User.tg_id == tg_id))
+        query = select(User)
+
+        if tg_id:
+            query = query.where(User.tg_id == tg_id)
+        if username:
+            query = query.where(User.username == username)
+        if regist_date:
+            query = query.where(User.regist_date == regist_date)
+        if user_status:
+            query = query.where(User.user_status == user_status)
+
+        result = await session.scalars(query)
+        return result.first()
 
 
 # таблица мест
@@ -128,23 +130,23 @@ async def get_comments(
         return result.all()
 
 
-# тут надо конкретно переделывать функцию получения статистики, а может полностью ее убирать
-async def get_user_stats(
-    tg_id: int,
-) -> "UserInfo":  # перепиши, чтобы можно было получать дату регистрации
-    async with async_sessions() as session:
-        user = await session.scalar(
-            select(User)
-            .where(User.tg_id == tg_id)
-            .options(joinedload(User.comment), joinedload(User.visited_places))
-        )
-        if user:
-            comments = [comment.text for comment in user.comments]
-            places = [visit.place for visit in user.visited_places]
-            return UserInfo(
-                comments=comments, places=places, reg_date=user.registration_date
-            )
-        return UserInfo(comments=[], places=[], reg_date=None)
+# тут надо конкретно переделывать функцию получения статистики, а может полностью ее убирать P.S - я удалил ненужные классы в начале кода и эта функция сломалась, так что я ее закомментировал
+# async def get_user_stats(
+#     tg_id: int,
+# ) -> "UserInfo":  # перепиши, чтобы можно было получать дату регистрации
+#     async with async_sessions() as session:
+#         user = await session.scalar(
+#             select(User)
+#             .where(User.tg_id == tg_id)
+#             .options(joinedload(User.comment), joinedload(User.visited_places))
+#         )
+#         if user:
+#             comments = [comment.text for comment in user.comments]
+#             places = [visit.place for visit in user.visited_places]
+#             return UserInfo(
+#                 comments=comments, places=places, reg_date=user.registration_date
+#             )
+#         return UserInfo(comments=[], places=[], reg_date=None)
 
 
 # таблица мероприятий
