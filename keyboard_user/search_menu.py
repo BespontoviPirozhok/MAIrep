@@ -29,19 +29,12 @@ class Step(StatesGroup):  # состояния
 
 
 async def place_view_smart_reply(tg_id: int, place_id: str):
+    top_button_text = "Отметить это место как посещенное"
     comment_exists = len(await get_comments(commentator_tg_id=tg_id, place_id=place_id))
     if comment_exists != 0:
         top_button_text = "Место уже посещено ✅"
-    else:
-        top_button_text = "Отметить это место как посещенное"
-
-    # Создаем базовую структуру клавиатуры
     keyboard = []
-
-    # Добавляем верхнюю кнопку
     keyboard.append([KeyboardButton(text=top_button_text)])
-
-    # Добавляем кнопку редактирования для менеджеров
     if await manager_check(tg_id):
         keyboard.append([KeyboardButton(text="Редактировать место")])
 
@@ -104,6 +97,10 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
                 place_list_inline.as_markup() if place_list_inline.buttons else None
             ),
         )
+    await message.answer(
+        """Введите название места, которое хотите найти""",
+        reply_markup=back_reply,
+    )
 
 
 async def get_place_info_text(place_id: int) -> str:
