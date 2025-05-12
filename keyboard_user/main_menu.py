@@ -11,8 +11,11 @@ error_rt = Router()
 
 main_menu_reply = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🔍 Поиск мест"), KeyboardButton(text="🤖 Чат с ИИ")],
-        [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="❓ Помощь")],
+        [
+            KeyboardButton(text="🔍 Поиск мест"),
+            KeyboardButton(text="🥳 Поиск мероприятий"),
+        ],
+        [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🤖 Чат с ИИ")],
     ],
     is_persistent=True,
     input_field_placeholder="Выберите пункт",
