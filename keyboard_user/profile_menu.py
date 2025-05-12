@@ -109,7 +109,7 @@ async def exit(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await state.clear()
     await return_to_user_menu(
-        callback.message.from_user.id, "Операция отменена", callback.message
+        callback.from_user.id, "Операция отменена", callback.message
     )
 
 
