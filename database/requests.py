@@ -70,7 +70,7 @@ async def get_place(
     address: Optional[str] = None,
 ) -> Optional[Place]:
     async with async_sessions() as session:
-        query = select(Place)  # Ищем места, а не комментарии
+        query = select(Place)
 
         if place_id:
             query = query.where(Place.place_id == place_id)
