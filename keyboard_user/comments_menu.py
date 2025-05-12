@@ -51,6 +51,7 @@ async def show_comments(message: Message, state: FSMContext):
 
     if not all_comments:
         await message.answer("🧑💻 Никто еще не написал комментарий")
+        await state.set_state(Step.place_view)
 
     else:
         # Инициализируем пагинацию
