@@ -11,7 +11,7 @@ from database.models import async_main
 
 # КЛАВИАТУРЫ
 from keyboard_user.main_menu import router as main_menu_rt
-from admin_and_manager.admin_menu import router as admin_menu_rt
+from roles.admin_menu import router as admin_menu_rt
 from keyboard_user.event_menu import router as event_menu_rt
 from keyboard_user.search_menu import router as search_menu_rt
 from keyboard_user.ai_menu import router as ai_menu_rt

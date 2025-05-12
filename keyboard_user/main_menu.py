@@ -6,7 +6,7 @@ import datetime
 import database.requests as rq
 
 from database.requests import get_user
-from admin_and_manager.admin_menu import admin_check, admin_main_menu_reply
+from roles.admin_menu import admin_check, admin_main_menu_reply
 
 router = Router()
 error_rt = Router()
