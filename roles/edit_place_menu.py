@@ -23,3 +23,7 @@ router = Router()
 class Step(StatesGroup):  # состояния
     place_view = State()
     edit_place = State()
+    edit_place_confirm = State()
+
+
+# "✏️ Изменить описание места"
