@@ -12,7 +12,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from datetime import date
-from roles.permissions import user_check
+from roles.roles_main import user_check
 from database.requests import add_comment, get_comments, delete_comment, get_place
 from .search_menu import place_view_smart_reply, get_place_info_text
 
@@ -200,7 +200,7 @@ async def feedback_full_confirm(message: Message, state: FSMContext):
 async def rating(message: Message, state: FSMContext):
     await state.set_state(Step.take_rating)
     await message.answer(
-        "Запускаем диалоговое окно еще раз...", reply_markup=ReplyKeyboardRemove()
+        "Запускаем диалоговое окно оценки...", reply_markup=ReplyKeyboardRemove()
     )
     await message.answer(
         "Насколько вам понравилось место от 1 до 5?:",
@@ -293,3 +293,6 @@ async def delete_review(message: Message, state: FSMContext):
         reply_markup=await place_view_smart_reply(message.from_user.id, place_id),
     )
     await state.update_data(user_rating=None, comment_text=None)
+
+
+# "✏️ Изменить описание места"
