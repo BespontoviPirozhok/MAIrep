@@ -108,7 +108,9 @@ async def profile(message: Message, state: FSMContext):
 async def exit(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await state.clear()
-    await return_to_user_menu("Операция отменена", callback.message)
+    await return_to_user_menu(
+        callback.message.from_user.id, "Операция отменена", callback.message
+    )
 
 
 @router.callback_query(F.data == "reg_date")

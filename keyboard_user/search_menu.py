@@ -118,7 +118,7 @@ async def search(message: Message, state: FSMContext):
 @router.message(Step.search_input, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu("Вы вернулись в меню", message)
+    await return_to_user_menu(message.from_user.id, "Вы вернулись в меню", message)
 
 
 @router.message(Step.search_input)

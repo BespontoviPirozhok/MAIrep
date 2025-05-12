@@ -48,7 +48,7 @@ async def help(message: Message, state: FSMContext):
 @router.message(Step.ai_chat, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu("Операция отменена", message)
+    await return_to_user_menu(message.from_user.id, "Операция отменена", message)
 
 
 @router.message(Step.ai_chat, F.text == "Маршрут построен 😎")

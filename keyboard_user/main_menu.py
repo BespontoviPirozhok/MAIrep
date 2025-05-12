@@ -5,6 +5,8 @@ from aiogram.filters import CommandStart
 import datetime
 import database.requests as rq
 
+from database.requests import get_user
+from admin_and_manager.admin_menu import admin_check, admin_main_menu_reply
 
 router = Router()
 error_rt = Router()
@@ -32,14 +34,20 @@ back_reply = ReplyKeyboardMarkup(
 
 
 async def return_to_user_menu(
+    tg_id: int,
     msg: str,
     message: Message,
-    keyboard: ReplyKeyboardMarkup = main_menu_reply,
 ) -> None:
-    await message.answer(
-        msg,
-        reply_markup=keyboard,
-    )
+    if admin_check(tg_id):
+        await message.answer(
+            msg,
+            reply_markup=admin_main_menu_reply,
+        )
+    else:
+        await message.answer(
+            msg,
+            reply_markup=main_menu_reply,
+        )
 
 
 def pretty_date(date_str: str) -> str:
@@ -64,9 +72,8 @@ def pretty_date(date_str: str) -> str:
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await rq.set_user(
-        tg_id=message.from_user.id, regist_date=datetime.datetime.now().date()
-    )
+    user_tg_id = message.from_user.id
+    await rq.set_user(tg_id=user_tg_id, regist_date=datetime.datetime.now().date())
     """Красивый ответ на /start"""
 
     now = datetime.datetime.now()
@@ -95,6 +102,7 @@ async def command_start_handler(message: Message) -> None:
 
     # Отправляем меню
     await return_to_user_menu(
+        user_tg_id,
         """Добро пожаловать в бота Location Chooser, вот мои функции:
 🔍 Поиск мест - поиск интересующих вас мест
 💬 Чат с ИИ - возможность по душам поболтать с искусственным интеллектом
@@ -110,5 +118,7 @@ async def unknown_command(message: Message) -> None:
     Ответ на неизвестное сообщение
     """
     await return_to_user_menu(
-        "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔", message
+        message.from_user.id,
+        "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔",
+        message,
     )
