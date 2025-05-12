@@ -49,17 +49,17 @@ back_reply = ReplyKeyboardMarkup(
 
 async def return_to_user_menu(
     tg_id: int,
-    msg: str,
+    msg_txt: str,
     message: Message,
 ) -> None:
     if await admin_check(tg_id):
         await message.answer(
-            msg,
+            msg_txt,
             reply_markup=admin_menu_reply,
         )
     else:
         await message.answer(
-            msg,
+            msg_txt,
             reply_markup=main_menu_reply,
         )
 
