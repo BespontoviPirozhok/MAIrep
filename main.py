@@ -1,4 +1,5 @@
 # AIOGRAM
+# я сасал
 from aiogram import Bot, Dispatcher
 
 # ОСТАЛЬНЫЕ МОДУЛИ
