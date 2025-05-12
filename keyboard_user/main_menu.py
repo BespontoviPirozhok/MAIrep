@@ -13,7 +13,7 @@ main_menu_reply = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="🔍 Поиск мест"),
-            KeyboardButton(text="🥳 Поиск мероприятий"),
+            KeyboardButton(text="🏝️ Поиск мероприятий"),
         ],
         [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🤖 Чат с ИИ")],
     ],
