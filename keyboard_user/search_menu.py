@@ -53,10 +53,9 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
 
 
 async def places_search_view(places_list: list, message: Message, state: FSMContext):
-    emoji = "🌐 "
-    button_text = "Добавить место в базу данных"
-    ban = ""
-    user = await user_check(message.from_user.id)
+    user = await user_check(
+        message.from_user.id
+    )  # Выносим проверку пользователя вне цикла
 
     if not places_list:
         await message.answer(
@@ -66,12 +65,18 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
         return
 
     for index, place in enumerate(places_list, start=1):
+        # Инициализируем переменные для каждого места
+        emoji = "🌐 "
+        button_text = "Добавить место в базу данных"
+        ban = ""
+
         place_in_db = await get_place(name=place.name, address=place.address)
         place_list_inline = InlineKeyboardBuilder()
 
         if place_in_db:
             button_text = "Показать это место"
             place_id = place_in_db.place_id
+            # Проверяем комментарии для текущего места
             if await get_comments(
                 commentator_tg_id=message.from_user.id, place_id=place_id
             ):
@@ -81,7 +86,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
         else:
             if not user:
                 ban = "\n\n❌ Место недоступно ❌"
-                emoji = ""
+                emoji = ""  # Сбрасываем эмодзи для неавторизованных
 
         # Добавляем кнопку только если место есть в БД ИЛИ пользователь авторизован
         if place_in_db or user:
@@ -97,6 +102,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
                 place_list_inline.as_markup() if place_list_inline.buttons else None
             ),
         )
+
     await message.answer(
         """В списке нет нужного места? Попробуйте изменить свой запрос.""",
         reply_markup=back_reply,
@@ -170,7 +176,7 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
         place_in_db = await get_place(
             name=current_place.name, address=current_place.address
         )
-        await callback.message.answer()
+        # await callback.message.answer()
 
     place_id = place_in_db.place_id
     await state.update_data(place_id=place_id)
