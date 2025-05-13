@@ -255,7 +255,7 @@ async def confirm_feedback(message: Message, state: FSMContext):
         text=comment_text,
         rating=user_rating,
     )
-    await message.answer("✅ Отзыв успешно сохранен!")
+    await message.answer("Отзыв успешно сохранен! ✅")
     place_info = await get_place_info_text(place_id)
     await message.answer(
         place_info,

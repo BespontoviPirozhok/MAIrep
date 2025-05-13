@@ -64,8 +64,8 @@ async def show_comments(message: Message, state: FSMContext):
 
 async def show_more_comments(message: Message, state: FSMContext):
     data = await state.get_data()
-    all_comments = data["all_comments"]
-    offset = data["comment_offset"]
+    all_comments = data.get("all_comments")
+    offset = data.get("comment_offset")
 
     # Определяем порцию комментариев
     BATCH_SIZE = 5
