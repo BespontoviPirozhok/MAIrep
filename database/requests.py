@@ -70,7 +70,7 @@ async def get_place(
     address: Optional[str] = None,
 ) -> Optional[Place]:
     async with async_sessions() as session:
-        query = select(Place)  # Ищем места, а не комментарии
+        query = select(Place)
 
         if place_id:
             query = query.where(Place.place_id == place_id)
@@ -83,6 +83,20 @@ async def get_place(
         return (
             result.first()
         )  # функция раньше возвращала список мест, но де-факто каждое место уникально => сейчас функция выводит первое место из списка
+
+
+async def update_place(
+    place_id: int,
+    new_category: Optional[str] = None,
+    new_description: Optional[str] = None,
+) -> None:
+    async with async_sessions() as session:
+        place = await session.get(Place, place_id)
+        if new_category:
+            place.category = new_category
+        if new_description:
+            place.description = new_description
+        await session.commit()
 
 
 # Таблица комментариев
