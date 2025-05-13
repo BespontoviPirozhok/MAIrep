@@ -36,7 +36,7 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
     keyboard = []
     keyboard.append([KeyboardButton(text=top_button_text)])
     if await manager_check(tg_id):
-        keyboard.append([KeyboardButton(text="✏️ Изменить описание места")])
+        keyboard.append([KeyboardButton(text="✏️ Изменить информацию о месте")])
 
     keyboard.extend(
         [
@@ -97,10 +97,11 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
             )
 
         await message.answer(
-            text=f"{emoji}{place.pretty_result}{ban}",
+            text=f"{emoji}*{place.name}*, {place.address}{ban}",
             reply_markup=(
                 place_list_inline.as_markup() if place_list_inline.buttons else None
             ),
+            parse_mode="MARKDOWN",
         )
 
     await message.answer(
