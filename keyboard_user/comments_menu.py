@@ -35,6 +35,7 @@ async def back_from_comments(message: Message, state: FSMContext):
         reply_markup=await place_view_smart_reply(
             tg_id=message.from_user.id, place_id=place_id
         ),
+        parse_mode="MARKDOWN",
     )
 
 

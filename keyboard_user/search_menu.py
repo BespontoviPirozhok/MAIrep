@@ -112,7 +112,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
 
 async def get_place_info_text(place_id: int) -> str:
     temp_place = await get_place(place_id=place_id)
-    return f"""{temp_place.name}
+    return f"""*{temp_place.name}*
     
 ⭐⭐⭐⭐⭐ 4.4 (эт заготовка есче)
 
@@ -192,6 +192,7 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(tg_id=tg_id, place_id=place_id),
+        parse_mode="MARKDOWN",
     )
     await callback.answer()
 
@@ -203,5 +204,3 @@ async def back_to_places_list(message: Message, state: FSMContext):
     places_list = data.get("places_list")
     await places_search_view(places_list, message, state)
     await state.update_data(current_place=None)
-
-    # еще один тест

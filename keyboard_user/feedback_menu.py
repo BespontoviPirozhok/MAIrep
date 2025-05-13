@@ -126,6 +126,7 @@ async def back_from_feedback(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(callback.from_user.id, place_id),
+        parse_mode="MARKDOWN",
     )
     await callback.answer()
 
@@ -151,6 +152,7 @@ async def no_review_visit(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(tg_id, place_id),
+        parse_mode="MARKDOWN",
     )
     await callback.answer()
 
@@ -234,6 +236,7 @@ async def back_from_feedback(message: Message, state: FSMContext):
     await message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(message.from_user.id, place_id),
+        parse_mode="MARKDOWN",
     )
     await state.update_data(user_rating=None, comment_text=None)
 
@@ -246,7 +249,6 @@ async def confirm_feedback(message: Message, state: FSMContext):
     user_rating = data.get("user_rating")
     comment_text = data.get("comment_text")
     await delete_comment(commentator_tg_id=tg_id, place_id=place_id)
-
     await add_comment(
         commentator_tg_id=tg_id,
         place_id=place_id,
@@ -258,6 +260,7 @@ async def confirm_feedback(message: Message, state: FSMContext):
     await message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(message.from_user.id, place_id),
+        parse_mode="MARKDOWN",
     )
     await state.set_state(Step.place_view)
     await state.update_data(user_rating=None, comment_text=None)
@@ -313,5 +316,6 @@ async def delete_review(message: Message, state: FSMContext):
     await message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(message.from_user.id, place_id),
+        parse_mode="MARKDOWN",
     )
     await state.update_data(user_rating=None, comment_text=None)
