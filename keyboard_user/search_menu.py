@@ -213,4 +213,4 @@ async def back_to_places_list(message: Message, state: FSMContext):
     await places_search_view(places_list, message, state)
     await state.update_data(current_place=None)
 
-    # тест
+    # еще один тест
