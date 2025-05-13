@@ -13,16 +13,10 @@ async def fetch_json(url):
 
 
 class Place:
-    def __init__(
-        self, name: str, address: str, category: str, pretty_result: str
-    ) -> None:
+    def __init__(self, name: str, address: str, category: str) -> None:
         self.name = name
         self.address = address
         self.category = category
-        self.pretty_result = pretty_result
-
-    def __repr__(self):
-        return self.pretty_result
 
 
 async def map_search(request):
@@ -42,16 +36,12 @@ async def map_search(request):
             if " · " in (result["subtitle"]["text"]):
                 address = (result["subtitle"]["text"]).split(" · ")[1]
                 category = (result["subtitle"]["text"]).split(" · ")[0]
-                pretty_result = f'{category} "{name}",\n{address}'
             else:
                 address = result["subtitle"]["text"]
                 category = ""
-                pretty_result = f'"{name}",\n{address}'
-                print(result)
-            places_list.append(Place(name, address, category, pretty_result))
+            places_list.append(Place(name, address, category))
 
         return places_list
 
-    except (KeyError, IndexError, aiohttp.ClientError) as e:
-        print(e)
+    except (KeyError, IndexError, aiohttp.ClientError):
         return []
