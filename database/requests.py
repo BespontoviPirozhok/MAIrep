@@ -85,6 +85,20 @@ async def get_place(
         )  # функция раньше возвращала список мест, но де-факто каждое место уникально => сейчас функция выводит первое место из списка
 
 
+async def update_place(
+    place_id: int,
+    new_category: Optional[str] = None,
+    new_description: Optional[str] = None,
+) -> None:
+    async with async_sessions() as session:
+        place = await session.get(Place, place_id)
+        if new_category:
+            place.category = new_category
+        if new_description:
+            place.description = new_description
+        await session.commit()
+
+
 # Таблица комментариев
 async def add_comment(
     commentator_tg_id: int,
