@@ -117,14 +117,13 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
 
 async def get_place_info_text(place_id: int) -> str:
     temp_place = await get_place(place_id=place_id)
-    return (
-        f"{temp_place.name}\n\n"
-        f"Категория: {temp_place.category}\n"
-        # f"Средняя оценка: {place.summary_rating}\n\n"
-        f"Адрес: {temp_place.address}\n"
-        f"Описание: {temp_place.description}\n"
-        # f"{place_data['summary']}"
-    )
+    return f"""{temp_place.name}
+            
+Категория: {temp_place.category}
+            
+Адрес: {temp_place.address}
+            
+Описание: {temp_place.description}"""
 
 
 @router.message(F.text == "🔍 Поиск мест")
@@ -213,3 +212,5 @@ async def back_to_places_list(message: Message, state: FSMContext):
     places_list = data.get("places_list")
     await places_search_view(places_list, message, state)
     await state.update_data(current_place=None)
+
+    # тест
