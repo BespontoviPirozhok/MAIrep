@@ -6,7 +6,7 @@ from aiogram.types import (
     CallbackQuery,
     ReplyKeyboardRemove,
 )
-from aiogram import Bot, Router
+from aiogram import Router
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
