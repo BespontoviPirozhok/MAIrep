@@ -53,15 +53,15 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
 
 
 async def places_search_view(places_list: list, message: Message, state: FSMContext):
-    user = await user_check(message.from_user.id)
-    message_ids = []  # Список для хранения ID сообщений
+    user = await user_check(
+        message.from_user.id
+    )  # Выносим проверку пользователя вне цикла
 
     if not places_list:
-        sent_message = await message.answer(
-            text="По вашему запросу ничего не нашлось...", reply_markup=back_reply
+        await message.answer(
+            text="По вашему запросу ничего не нашлось, введите другой запрос",
+            reply_markup=back_reply,
         )
-        message_ids.append(sent_message.message_id)
-        await state.update_data(search_message_ids=message_ids)
         return
 
     for index, place in enumerate(places_list, start=1):
@@ -96,23 +96,17 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
                 )
             )
 
-        sent_message = await message.answer(
+        await message.answer(
             text=f"{emoji}{place.pretty_result}{ban}",
             reply_markup=(
                 place_list_inline.as_markup() if place_list_inline.buttons else None
             ),
         )
-        message_ids.append(sent_message.message_id)
 
-    # Сохраняем ID финального сообщения
-    sent_message = await message.answer(
-        "В списке нет нужного места? Попробуйте изменить свой запрос.",
+    await message.answer(
+        """В списке нет нужного места? Попробуйте изменить свой запрос.""",
         reply_markup=back_reply,
     )
-    message_ids.append(sent_message.message_id)
-
-    # Записываем все ID в состояние
-    await state.update_data(search_message_ids=message_ids)
 
 
 async def get_place_info_text(place_id: int) -> str:
@@ -158,22 +152,13 @@ async def inline_places(message: Message, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith("place_select_"))
-async def handle_place_selection(
-    callback: CallbackQuery, state: FSMContext, bot: Bot  # Добавляем инжекцию бота
-):
+async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Step.place_view)
+
     tg_id = callback.from_user.id
 
-    # Удаляем предыдущие сообщения поисковой выдачи
-    data = await state.get_data()
-    message_ids = data.get("search_message_ids", [])
-
-    # Удаление сообщений
-    for msg_id in message_ids:
-        await bot.delete_message(chat_id=callback.message.chat.id, message_id=msg_id)
-
-    # Остальная логика обработчика
     place_index = int(callback.data.split("_")[-1]) - 1
+    data = await state.get_data()
     places_list = data.get("places_list")
     current_place = places_list[place_index]
 
@@ -196,13 +181,13 @@ async def handle_place_selection(
 
     place_id = place_in_db.place_id
     await state.update_data(place_id=place_id)
-
     place_info = await get_place_info_text(place_id=place_id)
+    await state.set_state(Step.place_view)
     await callback.message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(tg_id=tg_id, place_id=place_id),
     )
-    #  await callback.answer()
+    await callback.answer()
 
 
 @router.message(Step.place_view, F.text == "Назад")
