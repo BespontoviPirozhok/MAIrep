@@ -12,6 +12,7 @@ from database.models import async_main
 # КЛАВИАТУРЫ
 from keyboard_user.main_menu import router as main_menu_rt
 from roles.admin_menu import router as admin_menu_rt
+from roles.edit_place_menu import router as edit_place_menu_rt
 from keyboard_user.event_menu import router as event_menu_rt
 from keyboard_user.search_menu import router as search_menu_rt
 from keyboard_user.ai_menu import router as ai_menu_rt
@@ -27,6 +28,7 @@ TOKEN = os.getenv("TOKEN")
 # РОУТЕРЫ
 dp = Dispatcher()
 dp.include_router(main_menu_rt)
+dp.include_router(edit_place_menu_rt)
 dp.include_router(admin_menu_rt)
 dp.include_router(search_menu_rt)
 dp.include_router(event_menu_rt)
