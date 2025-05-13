@@ -66,7 +66,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
 
     for index, place in enumerate(places_list, start=1):
         # Инициализируем переменные для каждого места
-        emoji = "🌐 "
+        emoji = " 🌐 "
         button_text = "Добавить место в базу данных"
         ban = ""
 
@@ -80,12 +80,12 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
             if await get_comments(
                 commentator_tg_id=message.from_user.id, place_id=place_id
             ):
-                emoji = "✅ "
+                emoji = " ✅ "
             else:
-                emoji = "🌎 "
+                emoji = " 🌎 "
         else:
             if not user:
-                ban = "\n\n❌ Место недоступно ❌"
+                ban = "\n\n ❌ Место недоступно ❌"
                 emoji = ""  # Сбрасываем эмодзи для неавторизованных
 
         # Добавляем кнопку только если место есть в БД ИЛИ пользователь авторизован
@@ -112,12 +112,17 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
 async def get_place_info_text(place_id: int) -> str:
     temp_place = await get_place(place_id=place_id)
     return f"""{temp_place.name}
-            
+    
+⭐⭐⭐⭐⭐ 4.4 (эт заготовка есче)
+
 Категория: {temp_place.category}
             
 Адрес: {temp_place.address}
             
-Описание: {temp_place.description}"""
+Описание: {temp_place.description}
+
+Сводка комментариев: хорошее место, вкусно кормят, отличные цены
+"""
 
 
 @router.message(F.text == "🔍 Поиск мест")
