@@ -203,7 +203,7 @@ async def handle_place_selection(
         place_info,
         reply_markup=await place_view_smart_reply(tg_id=tg_id, place_id=place_id),
     )
-    # await callback.answer()
+    #  await callback.answer()
 
 
 @router.message(Step.place_view, F.text == "Назад")
