@@ -109,7 +109,7 @@ async def command_start_handler(message: Message) -> None:
     else:
         greeting = "Доброй ночи"
 
-    # Отправляем приветственное сообщение
+    # Отправляем оформленное приветственное сообщение
     await message.answer(
         f"В Москве сейчас {time_str}\n{greeting}, {first_name}! {emoji}"
     )
