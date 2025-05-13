@@ -87,14 +87,31 @@ feedback_visited_reply = ReplyKeyboardMarkup(
 
 @router.message(Step.place_view, F.text == "Отметить это место как посещенное")
 async def rating(message: Message, state: FSMContext):
-    await state.set_state(Step.take_rating)
-    await message.answer(
-        "Загружаем диалоговое окно оценки", reply_markup=ReplyKeyboardRemove()
-    )
-    await message.answer(
-        "Насколько вам понравилось место от 1 до 5?:",
-        reply_markup=feedback_rating_inline,
-    )
+    tg_id = message.from_user.id
+    if await user_check(tg_id):
+        await state.set_state(Step.take_rating)
+        await message.answer(
+            "Загружаем диалоговое окно оценки", reply_markup=ReplyKeyboardRemove()
+        )
+        await message.answer(
+            "Насколько вам понравилось место от 1 до 5?:",
+            reply_markup=feedback_rating_inline,
+        )
+    else:
+        data = await state.get_data()
+        place_id = data.get("place_id")
+        places_search_result = await get_place(place_id=place_id)
+        current_place_name = places_search_result.name
+        await add_comment(
+            commentator_tg_id=tg_id,
+            place_id=place_id,
+            text="",
+            rating="",
+        )
+        await message.answer(
+            f"Вы посетили место {current_place_name}!",
+            reply_markup=await place_view_smart_reply(tg_id, place_id),
+        )
 
 
 @router.callback_query(Step.take_rating, F.data == "back_to_place_view")
@@ -121,10 +138,9 @@ async def no_review_visit(callback: CallbackQuery, state: FSMContext):
     current_place_name = places_search_result.name
     tg_id = callback.from_user.id
     await delete_comment(commentator_tg_id=tg_id, place_id=place_id)
-    await get_place
     await add_comment(
         commentator_tg_id=tg_id,
-        place_name=current_place_name,
+        place_id=place_id,
         text="",
         rating="",
     )
@@ -134,7 +150,7 @@ async def no_review_visit(callback: CallbackQuery, state: FSMContext):
     place_info = await get_place_info_text(place_id=place_id)
     await callback.message.answer(
         place_info,
-        reply_markup=await place_view_smart_reply(callback.from_user.id, place_id),
+        reply_markup=await place_view_smart_reply(tg_id, place_id),
     )
     await callback.answer()
 
@@ -249,30 +265,36 @@ async def confirm_feedback(message: Message, state: FSMContext):
 
 @router.message(Step.place_view, F.text == "Место уже посещено ✅")
 async def show_existing_comment(message: Message, state: FSMContext):
-    await state.set_state(Step.feedback_confirm)
     data = await state.get_data()
     place_id = data.get("place_id")
-    places_search_result = await get_place(place_id=place_id)
-    current_place_name = places_search_result.name
     tg_id = message.from_user.id
-
-    comments = await get_comments(place_id=place_id, commentator_tg_id=tg_id)
-    comment = comments[0]
-    if len(comment.comment_text) == 0 and len(str(comment.commentator_rating)) == 0:
-        text = f"Вы отметили место {current_place_name} как посещенное без отзыва. Вы можете удалить отметку о посещении или оставить отзыв"
-        await message.answer(text, reply_markup=feedback_visited_reply)
-    elif len(comment.comment_text) == 0:
-        text = (
-            f"Ваша оценка к месту {current_place_name}:\n\n"
-            f"{comment.commentator_rating * "⭐"}"
-        )
-        await message.answer(text, reply_markup=feedback_edit_reply)
+    if await user_check(tg_id=tg_id):
+        places_search_result = await get_place(place_id=place_id)
+        current_place_name = places_search_result.name
+        await state.set_state(Step.feedback_confirm)
+        comments = await get_comments(place_id=place_id, commentator_tg_id=tg_id)
+        comment = comments[0]
+        if len(comment.comment_text) == 0 and len(str(comment.commentator_rating)) == 0:
+            text = f"Вы отметили место {current_place_name} как посещенное без отзыва. Вы можете удалить отметку о посещении или оставить отзыв"
+            await message.answer(text, reply_markup=feedback_visited_reply)
+        elif len(comment.comment_text) == 0:
+            text = (
+                f"Ваша оценка к месту {current_place_name}:\n\n"
+                f"{comment.commentator_rating * "⭐"}"
+            )
+            await message.answer(text, reply_markup=feedback_edit_reply)
+        else:
+            text = (
+                f"Ваш существующий отзыв к месту {current_place_name}:\n\n"
+                f"{comment.comment_text}"
+            )
+            await message.answer(text, reply_markup=feedback_edit_reply)
     else:
-        text = (
-            f"Ваш существующий отзыв к месту {current_place_name}:\n\n"
-            f"{comment.comment_text}"
+        await delete_comment(tg_id, place_id)
+        await message.answer(
+            "Отметка о посещении удалена ❌",
+            reply_markup=await place_view_smart_reply(tg_id, place_id),
         )
-        await message.answer(text, reply_markup=feedback_edit_reply)
 
 
 @router.message(
@@ -293,6 +315,3 @@ async def delete_review(message: Message, state: FSMContext):
         reply_markup=await place_view_smart_reply(message.from_user.id, place_id),
     )
     await state.update_data(user_rating=None, comment_text=None)
-
-
-# "✏️ Изменить описание места"

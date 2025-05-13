@@ -60,8 +60,12 @@ async def exit(message: Message, state: FSMContext):
 async def exit(message: Message, state: FSMContext):
     user_id = message.from_user.id
     if not await admin_check(user_id):
-        user_role = translate((await get_user(user_id)).user_status)
-        await return_to_user_menu(user_id, f"Ваша роль {user_role}", message)
+        user_role = await translate((await get_user(user_id)).user_status)
+        await return_to_user_menu(
+            user_id,
+            f"Вы - {user_role}, вам не доступно меню администратора!",
+            message,
+        )
     else:
         await state.set_state(Step.admin_menu)
         await message.answer(
