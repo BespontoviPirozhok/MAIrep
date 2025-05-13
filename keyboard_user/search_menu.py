@@ -187,6 +187,7 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
 
     place_id = place_in_db.place_id
     await state.update_data(place_id=place_id)
+    await state.update_data(place_name=place_in_db.name)
     place_info = await get_place_info_text(place_id=place_id)
     await state.set_state(Step.place_view)
     await callback.message.answer(
