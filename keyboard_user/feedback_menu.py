@@ -88,7 +88,7 @@ feedback_visited_reply = ReplyKeyboardMarkup(
 @router.message(Step.place_view, F.text == "Отметить это место как посещенное")
 async def rating(message: Message, state: FSMContext):
     tg_id = message.from_user.id
-    if await user_check(tg_id):
+    if await user_check(tg_id):  # проверка на обычного пользователя
         await state.set_state(Step.take_rating)
         await message.answer(
             "Загружаем диалоговое окно оценки", reply_markup=ReplyKeyboardRemove()
