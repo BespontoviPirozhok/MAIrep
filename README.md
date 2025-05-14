@@ -58,7 +58,7 @@
 pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
 
 Для запуска: ```bash
-python main.py```
+python main.py`` `
 
 
 
