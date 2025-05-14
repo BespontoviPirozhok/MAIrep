@@ -54,11 +54,9 @@
 
 ## Запуск бота
 
-Установка необходимых модулей: ```pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
+Установка необходимых модулей: ```cmd pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
 
-Для запуска: ```python main.py```
+Для запуска: ```cmd python main.py```
 
-> **Note**
-> Команда для копирования: `git clone https://github.com/username/repository.git`
 
 
