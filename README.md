@@ -56,7 +56,7 @@
 
 Установка необходимых модулей: ```pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
 
-Для запуска: python ```main.py```
+Для запуска: ```python main.py```
 
 
 
