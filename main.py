@@ -43,15 +43,15 @@ async def main() -> None:
     bot = Bot(TOKEN)
 
     try:
-        logger.info("Starting bot...")
+        logger.info("Запуск бота")
         await async_main()  # Запуск БД
         await dp.start_polling(bot)  # Запуск бота
     except asyncio.CancelledError:
-        logger.info("Bot stopped by user request")
+        logger.info("Бот остановлен пользователем")
     except Exception as e:
-        logger.exception(f"Bot stopped with error: {e}")
+        logger.exception(f"Бот упал, потому что {e}")
     finally:
-        logger.info("Shutting down...")
+        logger.info("Выключение бота")
         await bot.session.close()
 
 
