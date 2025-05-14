@@ -18,9 +18,16 @@ from keyboard_user.main_menu import (
     back_reply,
 )
 
-from roles.roles_main import user_check, manager_check, admin_check, translate
+from roles.roles_main import user_check, manager_check, admin_check, get_user_status
 
-from database.requests import get_place, add_place, get_comments, get_user
+from database.requests import (
+    get_place,
+    add_place,
+    get_comments,
+    get_user,
+    change_status_user,
+    delete_all_user_non_empty_comments,
+)
 
 from map_and_events.map import map_search
 
@@ -29,8 +36,8 @@ router = Router()
 admin_extended_reply = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="Выдать роль админа или менеджера"),
-            KeyboardButton(text="Ограничить пользователя или снять ограничение"),
+            KeyboardButton(text="Изменить роль пользователя"),
+            KeyboardButton(text="Что нужно сделать тимлиду?"),
         ],
         [
             KeyboardButton(text="👤 Профиль"),
@@ -48,11 +55,45 @@ class Step(StatesGroup):  # состояния
     ban_unban = State()
 
 
-@router.message(Step.admin_menu, F.text == "Назад в обычное меню")
-async def exit(message: Message, state: FSMContext):
-    await state.clear()
-    await return_to_user_menu(
-        message.from_user.id, "Вы вернулись в обычное меню", message
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+
+
+async def handle_role_assignment(message: Message, user_tg_id: int):
+    user = await get_user(tg_id=user_tg_id)
+
+    if user.user_status == 3:
+        await message.answer(
+            "Данный пользователь является администратором, ограничить его может только создатель бота",
+            reply_markup=back_reply,
+        )
+        return
+
+    status_text = await get_user_status(user_tg_id)
+
+    roles = [
+        (3, "Администратор"),
+        (2, "Менеджер"),
+        (1, "Обычный пользователь"),
+        (0, "Пользователь с ограничениями"),
+    ]
+
+    # Фильтруем текущую роль и создаем кнопки
+    available_roles = [
+        KeyboardButton(text=role_name)
+        for role_id, role_name in roles
+        if role_id != user.user_status
+    ]
+
+    # Создаем клавиатуру с правильной структурой
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[[btn] for btn in available_roles]  # Каждая кнопка в отдельном ряду
+        + [[KeyboardButton(text="Назад")]],  # Добавляем кнопку назад в последний ряд
+        resize_keyboard=True,
+    )
+
+    await message.answer(
+        f"Данный пользователь - {status_text}, какую роль хотите ему выдать:",
+        reply_markup=keyboard,
     )
 
 
@@ -60,7 +101,7 @@ async def exit(message: Message, state: FSMContext):
 async def exit(message: Message, state: FSMContext):
     user_id = message.from_user.id
     if not await admin_check(user_id):
-        user_role = await translate((await get_user(user_id)).user_status)
+        user_role = await get_user_status(user_id)
         await return_to_user_menu(
             user_id,
             f"Вы - {user_role}, вам не доступно меню администратора!",
@@ -72,3 +113,102 @@ async def exit(message: Message, state: FSMContext):
             "Добро пожаловать в Админ-меню! Скоро здесь будет описание как всем этим пользоваться",
             reply_markup=admin_extended_reply,
         )
+
+
+@router.message(Step.admin_menu, F.text == "Назад в обычное меню")
+async def back_to_main_menu(message: Message, state: FSMContext):
+    await state.clear()
+    await return_to_user_menu(
+        message.from_user.id, "Вы вернулись в обычное меню", message
+    )
+
+
+@router.message(Step.admin_menu, F.text == "Изменить роль пользователя")
+async def role_change_welcome(message: Message, state: FSMContext):
+    await state.set_state(Step.give_roles)
+    await message.answer(
+        "Введите ID пользователя, роль которого хотите поменять",
+        reply_markup=back_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Назад")
+async def role_change_exit(message: Message, state: FSMContext):
+    await state.set_state(Step.admin_menu)
+    await message.answer(
+        "Вы вернулись в Админ-меню",
+        reply_markup=admin_extended_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Администратор")
+async def role_change_exit(message: Message, state: FSMContext):
+    data = await state.get_data()
+    tg_id = data.get("tg_id")
+    await change_status_user(tg_id, 3)
+    await message.answer(
+        "Вы выдали данному пользователю роль администратора.Помимо возможностей менеджера, администратор может изменять роли пользователей.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        reply_markup=back_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Менеджер")
+async def role_change_exit(message: Message, state: FSMContext):
+    data = await state.get_data()
+    tg_id = data.get("tg_id")
+    await change_status_user(tg_id, 2)
+    await message.answer(
+        "Вы выдали данному пользователю роль менеджера.Помимо возможностей обычного пользователя, менеджер может изменять описание и категории мест.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        reply_markup=back_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Обычный пользователь")
+async def role_change_exit(message: Message, state: FSMContext):
+    data = await state.get_data()
+    tg_id = data.get("tg_id")
+    await change_status_user(tg_id, 1)
+    await message.answer(
+        "Вы выдали данному пользователю роль обычного пользователя.Он может добавлять места в базу данных, оставлять комментарии и оценки к местам.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        reply_markup=back_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Пользователь с ограничениями")
+async def role_change_exit(message: Message, state: FSMContext):
+    data = await state.get_data()
+    tg_id = data.get("tg_id")
+    await change_status_user(tg_id, 0)
+    await delete_all_user_non_empty_comments(tg_id)
+    await message.answer(
+        "Вы ограничили данного пользователя и удалили все его отзывы. Теперь он не может оставлять комментарии и оценки, а также добавлять места в базу данных.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        reply_markup=back_reply,
+    )
+
+
+@router.message(Step.give_roles)
+async def role_change_menu(message: Message, state: FSMContext):
+    raw_tg_id = message.text
+    if len(raw_tg_id) != 10 or not raw_tg_id.isdigit():
+        await message.answer(
+            "Неверный тип данных!",
+            reply_markup=back_reply,
+        )
+        return
+
+    tg_id = int(raw_tg_id)
+    if not await get_user(tg_id):
+        await message.answer(
+            "Данный пользователь не пользуется ботом!",
+            reply_markup=back_reply,
+        )
+    elif tg_id == message.from_user.id:
+        await message.answer_sticker(
+            r"CAACAgIAAxkBAAEOeXpoI8k2d0KNlQNw-6N0yhw1FgF_NQACJkQAAlVjOUoDhSheRxpQOjYE"
+        )
+        await message.answer(
+            "Вы не можете уменьшить свои полномочия!", reply_markup=back_reply
+        )
+    else:
+        await handle_role_assignment(message, tg_id)
+        await state.update_data(tg_id=tg_id)

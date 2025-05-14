@@ -1,7 +1,10 @@
 from database.requests import get_user
 
 
-async def translate(user_status: int) -> str:
+async def get_user_status(user_id: int) -> str:
+    user = await get_user(user_id)
+    user_status = user.user_status
+
     if user_status == 0:
         return "Пользователь с ограничениями"
     if user_status == 1:

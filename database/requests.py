@@ -1,4 +1,4 @@
-from sqlalchemy import select, update, delete, func, and_
+from sqlalchemy import select, update, delete, func, and_, or_
 from sqlalchemy.orm import joinedload
 from datetime import date
 from typing import List, Optional
@@ -10,7 +10,7 @@ from .models import User, Place, Comment, VisitedEvents
 
 
 # таблица пользователей - статус 0 - ограниченный пользователь, 1 - обычный пользователь, 2 - менеджер, 3 - админ
-async def set_user(
+async def add_user(
     tg_id: int, regist_date: date, user_status: Optional[int] = 1
 ) -> None:
     async with async_sessions() as session:
@@ -21,6 +21,16 @@ async def set_user(
                 User(tg_id=tg_id, regist_date=regist_date, user_status=user_status)
             )
             await session.commit()
+
+
+async def change_status_user(tg_id: int, user_status: Optional[int] = 1) -> None:
+    async with async_sessions() as session:
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+
+        if user:
+            user.user_status = user_status
+
+        await session.commit()
 
 
 async def get_user(
@@ -80,9 +90,7 @@ async def get_place(
             query = query.where(Place.address == address)
 
         result = await session.scalars(query)
-        return (
-            result.first()
-        )  # функция раньше возвращала список мест, но де-факто каждое место уникально => сейчас функция выводит первое место из списка
+        return result.first()
 
 
 async def update_place(
@@ -118,19 +126,6 @@ async def add_comment(
         await session.commit()
 
 
-async def delete_comment(commentator_tg_id: int, place_id: int) -> None:
-    async with async_sessions() as session:
-        await session.execute(
-            delete(Comment).where(
-                and_(
-                    Comment.commentator_tg_id == commentator_tg_id,
-                    Comment.place_id == place_id,
-                )
-            )
-        )
-        await session.commit()
-
-
 async def get_comments(
     place_id: Optional[int] = None, commentator_tg_id: Optional[int] = None
 ) -> List[Comment]:
@@ -142,6 +137,47 @@ async def get_comments(
             query = query.where(Comment.commentator_tg_id == commentator_tg_id)
         result = await session.scalars(query)
         return result.all()
+
+
+# async def delete_comment(commentator_tg_id: int, place_id: int) -> None:
+#     async with async_sessions() as session:
+#         await session.execute(
+#             delete(Comment).where(
+#                 and_(
+#                     Comment.commentator_tg_id == commentator_tg_id,
+#                     Comment.place_id == place_id,
+#                 )
+#             )
+#         )
+#         await session.commit()
+
+
+async def delete_comment(
+    commentator_tg_id: int, place_id: Optional[int] = None
+) -> None:
+    async with async_sessions() as session:
+        conditions = [Comment.commentator_tg_id == commentator_tg_id]
+        if place_id is not None:
+            conditions.append(Comment.place_id == place_id)
+
+        await session.execute(delete(Comment).where(and_(*conditions)))
+        await session.commit()
+
+
+async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
+    async with async_sessions() as session:
+        await session.execute(
+            delete(Comment).where(
+                and_(
+                    Comment.commentator_tg_id == commentator_tg_id,
+                    or_(
+                        Comment.comment_text != "",  # Непустой текст
+                        Comment.commentator_rating.isnot(None),  # Рейтинг указан
+                    ),
+                )
+            )
+        )
+        await session.commit()
 
 
 # тут надо конкретно переделывать функцию получения статистики, а может полностью ее убирать P.S - я удалил ненужные классы в начале кода и эта функция сломалась, так что я ее закомментировал

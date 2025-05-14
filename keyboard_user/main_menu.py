@@ -4,7 +4,7 @@ from aiogram.filters import CommandStart
 
 import datetime
 
-from database.requests import get_user, set_user
+from database.requests import get_user, add_user
 from roles.roles_main import admin_check
 
 router = Router()
@@ -87,7 +87,7 @@ def pretty_date(date_str: str) -> str:
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     user_tg_id = message.from_user.id
-    await set_user(tg_id=user_tg_id, regist_date=datetime.datetime.now().date())
+    await add_user(tg_id=user_tg_id, regist_date=datetime.datetime.now().date())
     """Красивый ответ на /start"""
 
     now = datetime.datetime.now()
