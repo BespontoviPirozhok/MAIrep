@@ -54,16 +54,14 @@
 
 ## Запуск бота
 
-Установка необходимых модулей: ```bash
-pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
+Установка необходимых модулей:
+```bash
+pip install python-dotenv, aiogram, aiosqlite, sqlalchemy
+```
 
-Для запуска: ```bash
-python main.py```
-
-```rb
-# path/to/your/file.rb
-class MyClass
-end
+Для запуска введите это в терминал в директории проекта: 
+```bash
+python main.py
 ```
 
 
