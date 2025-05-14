@@ -58,6 +58,14 @@
 
 Для запуска: ```python main.py```
 
+<details>
+<summary>Скопировать команду</summary>
 
+```bash
+python main.py
+```
+
+<button onclick="navigator.clipboard.writeText('git clone https://github.com/username/repository.git')">Копировать</button>
+</details>
 
 
