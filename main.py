@@ -31,13 +31,29 @@ dp.include_router(comments_menu_rt)
 dp.include_router(feedback_menu_rt)
 dp.include_router(error_rt)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(message)s",
+    stream=sys.stdout,
+)
+logger = logging.getLogger(__name__)
+
 
 async def main() -> None:
-    await async_main()  # Запуск БД
     bot = Bot(TOKEN)
-    await dp.start_polling(bot)  # Запуск бота
+
+    try:
+        logger.info("Starting bot...")
+        await async_main()  # Запуск БД
+        await dp.start_polling(bot)  # Запуск бота
+    except asyncio.CancelledError:
+        logger.info("Bot stopped by user request")
+    except Exception as e:
+        logger.exception(f"Bot stopped with error: {e}")
+    finally:
+        logger.info("Shutting down...")
+        await bot.session.close()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
