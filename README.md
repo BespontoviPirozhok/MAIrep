@@ -54,9 +54,11 @@
 
 ## Запуск бота
 
-Установка необходимых модулей: ```cmd pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
+Установка необходимых модулей: ```bash
+pip install python-dotenv, aiogram, aiosqlite, sqlalchemy```
 
-Для запуска: ```cmd python main.py```
+Для запуска: ```bash
+python main.py```
 
 
 
