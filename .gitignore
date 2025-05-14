@@ -1,6 +1,7 @@
 .env
 venv
 .venv
+__pycache__
 user_interface/__pycache__
 database/__pycache__
 map_and_events/__pycache__
