@@ -61,7 +61,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 async def handle_role_assignment(message: Message, user_tg_id: int):
     user = await get_user(tg_id=user_tg_id)
 
-    if user.user_status == 4:
+    if user.user_status == 3:
         await message.answer(
             "Данный пользователь является администратором, ограничить его может только создатель бота",
             reply_markup=back_reply,
@@ -202,13 +202,21 @@ async def role_change_menu(message: Message, state: FSMContext):
             "Данный пользователь не пользуется ботом!",
             reply_markup=back_reply,
         )
-    # elif tg_id == message.from_user.id:
-    #     await message.answer_sticker(
-    #         r"CAACAgIAAxkBAAEOeXpoI8k2d0KNlQNw-6N0yhw1FgF_NQACJkQAAlVjOUoDhSheRxpQOjYE"
-    #     )
-    #     await message.answer(
-    #         "Вы не можете уменьшить свои полномочия!", reply_markup=back_reply
-    #     )
+    elif tg_id == message.from_user.id:
+        await message.answer_sticker(
+            r"CAACAgIAAxkBAAEOeXpoI8k2d0KNlQNw-6N0yhw1FgF_NQACJkQAAlVjOUoDhSheRxpQOjYE"
+        )
+        await message.answer(
+            "Вы не можете уменьшить свои полномочия!", reply_markup=back_reply
+        )
     else:
         await handle_role_assignment(message, tg_id)
         await state.update_data(tg_id=tg_id)
+
+
+@router.message(Step.admin_menu, F.text == "Что нужно сделать тимлиду?")
+async def role_change_welcome(message: Message, state: FSMContext):
+    await message.answer_sticker(
+        r"CAACAgIAAxkBAAEOeetoJG2GqFRopR3iPwYs1cXMJIXkRQACIiIAApfZIUhQxfUZvjllyjYE"
+    )
+    await message.answer("Тимлиду нужно поспать!", reply_markup=admin_extended_reply)
