@@ -61,7 +61,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 async def handle_role_assignment(message: Message, user_tg_id: int):
     user = await get_user(tg_id=user_tg_id)
 
-    if user.user_status == 3:
+    if user.user_status == 4:
         await message.answer(
             "Данный пользователь является администратором, ограничить его может только создатель бота",
             reply_markup=back_reply,
