@@ -139,19 +139,6 @@ async def get_comments(
         return result.all()
 
 
-# async def delete_comment(commentator_tg_id: int, place_id: int) -> None:
-#     async with async_sessions() as session:
-#         await session.execute(
-#             delete(Comment).where(
-#                 and_(
-#                     Comment.commentator_tg_id == commentator_tg_id,
-#                     Comment.place_id == place_id,
-#                 )
-#             )
-#         )
-#         await session.commit()
-
-
 async def delete_comment(
     commentator_tg_id: int, place_id: Optional[int] = None
 ) -> None:
