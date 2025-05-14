@@ -49,6 +49,7 @@ async def place_view_smart_reply(tg_id: int, place_id: str):
         keyboard=keyboard,
         resize_keyboard=True,
         is_persistent=True,
+        input_field_placeholder="Выберите пункт",
     )
 
 

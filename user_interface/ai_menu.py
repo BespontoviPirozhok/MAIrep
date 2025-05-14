@@ -30,6 +30,7 @@ ai_advice_keyboard = ReplyKeyboardMarkup(
         [KeyboardButton(text="Назад")],
     ],
     resize_keyboard=True,
+    input_field_placeholder="Выберите пункт",
 )
 
 

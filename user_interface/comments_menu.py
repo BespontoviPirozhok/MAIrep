@@ -51,7 +51,9 @@ async def show_comments(message: Message, state: FSMContext):
     all_comments = filtered_comments
 
     if not all_comments:
-        await message.answer("🧑💻 Никто еще не написал комментарий")
+        await message.answer(
+            "🧑💻 Никто еще не написал комментарий", reply_markup=back_reply
+        )
         await state.set_state(Step.place_view)
 
     else:

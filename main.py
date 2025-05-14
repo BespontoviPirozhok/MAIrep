@@ -31,7 +31,7 @@ dp.include_router(comments_menu_rt)
 dp.include_router(feedback_menu_rt)
 dp.include_router(error_rt)
 
-# КОНФИГУРАЦИЯ ЛОГЕРА
+# КОНФИГУРАЦИЯ ЛОГГЕРА
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(message)s",

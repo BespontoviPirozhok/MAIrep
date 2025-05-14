@@ -47,9 +47,21 @@ admin_extended_reply = ReplyKeyboardMarkup(
     is_persistent=True,
     input_field_placeholder="Выберите пункт",
 )
+delete_comments_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text="Удалить"),
+        ],
+        [
+            KeyboardButton(text="Не удалять"),
+        ],
+    ],
+    is_persistent=True,
+    input_field_placeholder="Выберите пункт",
+)
 
 
-class Step(StatesGroup):  # состояния
+class Step(StatesGroup):
     admin_menu = State()
     give_roles = State()
     ban_unban = State()
@@ -127,8 +139,15 @@ async def back_to_main_menu(message: Message, state: FSMContext):
 async def role_change_welcome(message: Message, state: FSMContext):
     await state.set_state(Step.give_roles)
     await message.answer(
-        "Введите ID пользователя, роль которого хотите поменять",
+        """Справка о правах пользователей в зависимости от ролей:
+- *Ограниченный пользователь*: отметка/снятие отметки о посещении мест и мероприятий.
+- *Обычный пользователь*: добавление мест в базу данных, оставление комментариев и оценок.
+- *Менеджер* (включая права обычного пользователя): редактирование описаний и категорий мест.
+- *Администратор*: смена ролей пользователей (дополнительно ко всем предыдущим функциям).
+
+Введите ID пользователя для изменения роли.""",
         reply_markup=back_reply,
+        parse_mode="MARKDOWN",
     )
 
 
@@ -146,8 +165,9 @@ async def role_change_exit(message: Message, state: FSMContext):
     data = await state.get_data()
     tg_id = data.get("tg_id")
     await change_status_user(tg_id, 3)
+    await state.update_data(tg_id=None)
     await message.answer(
-        "Вы выдали данному пользователю роль администратора.Помимо возможностей менеджера, администратор может изменять роли пользователей.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        "Вы выдали данному пользователю роль администратора.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
 
@@ -157,8 +177,9 @@ async def role_change_exit(message: Message, state: FSMContext):
     data = await state.get_data()
     tg_id = data.get("tg_id")
     await change_status_user(tg_id, 2)
+    await state.update_data(tg_id=None)
     await message.answer(
-        "Вы выдали данному пользователю роль менеджера.Помимо возможностей обычного пользователя, менеджер может изменять описание и категории мест.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        "Вы выдали данному пользователю роль менеджера.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
 
@@ -169,7 +190,7 @@ async def role_change_exit(message: Message, state: FSMContext):
     tg_id = data.get("tg_id")
     await change_status_user(tg_id, 1)
     await message.answer(
-        "Вы выдали данному пользователю роль обычного пользователя.Он может добавлять места в базу данных, оставлять комментарии и оценки к местам.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        "Вы выдали данному пользователю роль обычного пользователя.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
 
@@ -179,9 +200,27 @@ async def role_change_exit(message: Message, state: FSMContext):
     data = await state.get_data()
     tg_id = data.get("tg_id")
     await change_status_user(tg_id, 0)
+    await message.answer(
+        "Вы ограничили данного пользователя.\n\nВы также можете удалить все уже существующие комментарии и оценки этого пользователя безвозратно.",
+        reply_markup=delete_comments_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Удалить")
+async def role_change_exit(message: Message, state: FSMContext):
+    data = await state.get_data()
+    tg_id = data.get("tg_id")
     await delete_all_user_non_empty_comments(tg_id)
     await message.answer(
-        "Вы ограничили данного пользователя и удалили все его отзывы. Теперь он не может оставлять комментарии и оценки, а также добавлять места в базу данных.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        "Все комментарии и оценки пользователя удалены\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+        reply_markup=back_reply,
+    )
+
+
+@router.message(Step.give_roles, F.text == "Не удалять")
+async def role_change_exit(message: Message):
+    await message.answer(
+        "Оценки и комментарии остались нетронутыми\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
 
