@@ -35,7 +35,6 @@ async def change_status_user(tg_id: int, user_status: Optional[int] = 1) -> None
 
 async def get_user(
     tg_id: int = None,
-    username: Optional[str] = None,
     regist_date: Optional[date] = None,
     user_status: Optional[int] = None,
 ) -> Optional[User]:
@@ -44,8 +43,6 @@ async def get_user(
 
         if tg_id:
             query = query.where(User.tg_id == tg_id)
-        if username:
-            query = query.where(User.username == username)
         if regist_date:
             query = query.where(User.regist_date == regist_date)
         if user_status:

@@ -1,9 +1,5 @@
 import aiohttp
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-MAP_APIKEY = os.getenv("MAP_APIKEY")
+from main import MAP_APIKEY
 
 
 async def fetch_json(url):

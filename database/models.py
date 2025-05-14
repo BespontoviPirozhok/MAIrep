@@ -1,11 +1,8 @@
 from sqlalchemy import Integer, Float, BigInteger, String, Date, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
-from dotenv import load_dotenv
-import os
+from main import DB
 
-load_dotenv()
-DB = os.getenv("DATABASE")
 engine = create_async_engine(DB)
 
 async_sessions = async_sessionmaker(engine)
@@ -53,11 +50,6 @@ class VisitedEvents(Base):
     visit_id: Mapped[int] = mapped_column(primary_key=True)
     user_tg_id: Mapped[int] = mapped_column(ForeignKey("users.user_id"))
     review_text: Mapped[str] = mapped_column(String(200))
-
-
-async def get_db():
-    async with async_sessionmaker() as session:
-        yield session
 
 
 async def async_main():
