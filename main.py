@@ -1,13 +1,10 @@
 # AIOGRAM
 from aiogram import Bot, Dispatcher
 
-# ОСТАЛЬНЫЕ МОДУЛИ
-from dotenv import load_dotenv
-import os
-import asyncio
-import logging
-import sys
+# ОСТАЛЬНЫЕ ИМПОРТЫ
+import asyncio, logging, sys
 from database.models import async_main
+from loaded_keys import TOKEN
 
 # КЛАВИАТУРЫ
 from user_interface.main_menu import router as main_menu_rt
@@ -20,12 +17,6 @@ from user_interface.profile_menu import router as profile_menu_rt
 from user_interface.feedback_menu import router as feedback_menu_rt
 from user_interface.comments_menu import router as comments_menu_rt
 from user_interface.main_menu import error_rt
-
-# ТОКЕНЫ, БД и APIKEYS
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
-DB = os.getenv("DATABASE")
-MAP_APIKEY = os.getenv("MAP_APIKEY")
 
 # РОУТЕРЫ
 dp = Dispatcher()
