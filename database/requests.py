@@ -180,10 +180,7 @@ async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
             delete(Comment).where(
                 and_(
                     Comment.commentator_tg_id == commentator_tg_id,
-                    or_(
-                        Comment.comment_text != "",  # Непустой текст
-                        Comment.commentator_rating != "",  # Рейтинг указан
-                    ),
+                    Comment.commentator_rating != "",
                 )
             )
         )
