@@ -182,7 +182,8 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
             name=current_place.name, address=current_place.address
         )
         await callback.message.answer(
-            f"Место {current_place.name} добавлено в базу данных"
+            f"Место *{current_place.name}* добавлено в базу данных",
+            parse_mode="MARKDOWN",
         )
 
     place_id = place_in_db.place_id
