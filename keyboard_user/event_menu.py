@@ -65,7 +65,9 @@ async def event_input_back(message: Message, state: FSMContext):
 async def process_support_question(message: Message, state: FSMContext):
     user_question = message.text
     await return_to_user_menu(
-        "Спасибо за ваше сообщение! Мы скоро свяжемся с вами.", message
+        message.from_user.id,
+        "Спасибо за ваше сообщение! Мы скоро свяжемся с вами.",
+        message,
     )
     print(user_question)
     await state.clear()

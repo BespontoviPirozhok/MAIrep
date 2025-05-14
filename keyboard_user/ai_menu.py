@@ -82,5 +82,6 @@ async def sending_message_to_ai(message: Message, state: FSMContext):
     request_to_ai = message.text
     print(request_to_ai)
     await message.answer_sticker(
-        r"CAACAgIAAxkBAAEOZD9oEnDFvWYOx4FG4HSPqijWCx8iPwACqGAAAn_xWUq5KNvV3mYaEDYE"
+        r"CAACAgIAAxkBAAEOZD9oEnDFvWYOx4FG4HSPqijWCx8iPwACqGAAAn_xWUq5KNvV3mYaEDYE",
+        reply_markup=ai_chat_keyboard,
     )
