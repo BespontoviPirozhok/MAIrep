@@ -12,7 +12,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from keyboard_user.main_menu import (
+from user_interface.main_menu import (
     admin_menu_reply,
     return_to_user_menu,
     back_reply,

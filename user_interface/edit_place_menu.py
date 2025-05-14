@@ -13,8 +13,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from roles.roles_main import manager_check
 from database.requests import get_place, update_place
-from keyboard_user.search_menu import place_view_smart_reply, get_place_info_text
-from keyboard_user.feedback_menu import feedback_confirm_reply
+from user_interface.search_menu import place_view_smart_reply, get_place_info_text
+from user_interface.feedback_menu import feedback_confirm_reply
 
 
 router = Router()

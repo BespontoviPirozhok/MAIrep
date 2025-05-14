@@ -10,16 +10,16 @@ import sys
 from database.models import async_main
 
 # КЛАВИАТУРЫ
-from keyboard_user.main_menu import router as main_menu_rt
-from roles.admin_menu import router as admin_menu_rt
-from roles.edit_place_menu import router as edit_place_menu_rt
-from keyboard_user.event_menu import router as event_menu_rt
-from keyboard_user.search_menu import router as search_menu_rt
-from keyboard_user.ai_menu import router as ai_menu_rt
-from keyboard_user.profile_menu import router as profile_menu_rt
-from keyboard_user.feedback_menu import router as feedback_menu_rt
-from keyboard_user.comments_menu import router as comments_menu_rt
-from keyboard_user.main_menu import error_rt
+from user_interface.main_menu import router as main_menu_rt
+from user_interface.admin_menu import router as admin_menu_rt
+from user_interface.edit_place_menu import router as edit_place_menu_rt
+from user_interface.event_menu import router as event_menu_rt
+from user_interface.search_menu import router as search_menu_rt
+from user_interface.ai_menu import router as ai_menu_rt
+from user_interface.profile_menu import router as profile_menu_rt
+from user_interface.feedback_menu import router as feedback_menu_rt
+from user_interface.comments_menu import router as comments_menu_rt
+from user_interface.main_menu import error_rt
 
 # ТОКЕН И БД
 load_dotenv()
