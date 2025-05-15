@@ -41,6 +41,7 @@ async def back_from_comments(message: Message, state: FSMContext):
 
 @router.message(Step.place_view, F.text == "Посмотреть комментарии")
 async def show_comments(message: Message, state: FSMContext):
+    tg_id = message.from_user.id
     data = await state.get_data()
     place_id = data.get("place_id")
     await state.set_state(Step.сomments_list)
@@ -52,7 +53,8 @@ async def show_comments(message: Message, state: FSMContext):
 
     if not all_comments:
         await message.answer(
-            "🧑💻 Никто еще не написал комментарий", reply_markup=back_reply
+            "🧑💻 Никто еще не написал комментарий",
+            reply_markup=await place_view_smart_reply(tg_id, place_id),
         )
         await state.set_state(Step.place_view)
 

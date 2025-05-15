@@ -30,8 +30,7 @@ class Step(StatesGroup):  # состояния
 
 async def place_view_smart_reply(tg_id: int, place_id: str):
     top_button_text = "Отметить это место как посещенное"
-    comment_exists = len(await get_comments(commentator_tg_id=tg_id, place_id=place_id))
-    if comment_exists != 0:
+    if await get_comments(commentator_tg_id=tg_id, place_id=place_id):
         top_button_text = "Место уже посещено ✅"
     keyboard = []
     keyboard.append([KeyboardButton(text=top_button_text)])

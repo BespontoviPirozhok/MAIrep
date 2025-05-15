@@ -145,7 +145,7 @@ async def role_change_welcome(message: Message, state: FSMContext):
 - *Менеджер* (включая права обычного пользователя): редактирование описаний и категорий мест.
 - *Администратор*: смена ролей пользователей (дополнительно ко всем предыдущим функциям).
 
-Введите ID пользователя для изменения роли.""",
+Введите ID пользователя для изменения его роли.""",
         reply_markup=back_reply,
         parse_mode="MARKDOWN",
     )
@@ -228,7 +228,7 @@ async def role_change_exit(message: Message):
 @router.message(Step.give_roles)
 async def role_change_menu(message: Message, state: FSMContext):
     raw_tg_id = message.text
-    if len(raw_tg_id) != 10 or not raw_tg_id.isdigit():
+    if len(raw_tg_id) < 8 or not raw_tg_id.isdigit():
         await message.answer(
             "Неверный тип данных!",
             reply_markup=back_reply,

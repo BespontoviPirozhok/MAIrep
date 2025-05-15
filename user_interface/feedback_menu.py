@@ -178,7 +178,6 @@ async def handle_rating(callback: CallbackQuery, state: FSMContext):
 async def feedback_rating_confirm(callback: CallbackQuery, state: FSMContext):
     await state.set_state(Step.feedback_confirm)
     data = await state.get_data()
-    place_id = data.get("place_id")
     current_place_name = data.get("place_name")
     await state.update_data(comment_text="")
     await callback.message.answer(
@@ -193,14 +192,12 @@ async def feedback_rating_confirm(callback: CallbackQuery, state: FSMContext):
 async def feedback_full_confirm(message: Message, state: FSMContext):
     await state.set_state(Step.feedback_confirm)
     comment_text_input = message.text
-    await state.update_data(comment_text=comment_text_input)
     data = await state.get_data()
-    place_id = data.get("place_id")
     current_place_name = data.get("place_name")
 
     full_review = feedback_full_confirfm_text.format(
         username=message.from_user.first_name,
-        pretty_rating="⭐" * data["user_rating"],
+        pretty_rating="⭐" * data.get("user_rating"),
         comment_date=date.today().strftime("%d.%m.%Y"),
         comment_text=comment_text_input,
     )
@@ -276,12 +273,12 @@ async def show_existing_comment(message: Message, state: FSMContext):
         await state.set_state(Step.feedback_confirm)
         comments = await get_comments(place_id=place_id, commentator_tg_id=tg_id)
         comment = comments[0]
-        if len(comment.comment_text) == 0 and len(str(comment.commentator_rating)) == 0:
+        if (comment.commentator_rating) == 0:
             text = f"Вы отметили место *{current_place_name}* как посещенное без отзыва. Вы можете удалить отметку о посещении или оставить отзыв"
             await message.answer(
                 text, reply_markup=feedback_visited_reply, parse_mode="MARKDOWN"
             )
-        elif len(comment.comment_text) == 0:
+        elif comment.comment_text == "":
             text = (
                 f"Ваша оценка к месту *{current_place_name}*:\n\n"
                 f"{comment.commentator_rating * "⭐"}"
