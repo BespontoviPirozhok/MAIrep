@@ -16,9 +16,14 @@ from user_interface.main_menu import (
     admin_menu_reply,
     return_to_user_menu,
     back_reply,
+    main_menu_reply,
 )
-
-from roles.roles_main import user_check, manager_check, admin_check, get_user_status
+from roles.dispatcher_handler import DispatcherHandler
+from roles.roles_main import (
+    admin_check,
+    get_user_status_text,
+    owner_check,
+)
 
 from database.requests import (
     get_place,
@@ -29,7 +34,6 @@ from database.requests import (
     delete_all_user_non_empty_comments,
 )
 
-from map_and_events.map import map_search
 
 router = Router()
 
@@ -58,6 +62,7 @@ delete_comments_reply = ReplyKeyboardMarkup(
     ],
     is_persistent=True,
     input_field_placeholder="Выберите пункт",
+    resize_keyboard=True,
 )
 
 
@@ -67,20 +72,27 @@ class Step(StatesGroup):
     ban_unban = State()
 
 
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-
-
 async def handle_role_assignment(message: Message, user_tg_id: int):
-    user = await get_user(tg_id=user_tg_id)
+    user_id = await get_user(tg_id=user_tg_id)
+    admin_id = message.from_user.id
+    is_owner = await owner_check(
+        admin_id
+    )  # Проверка, является ли текущий пользователь владельцем
 
-    if user.user_status == 3:
+    if user_id.user_status == 4:
         await message.answer(
-            "Данный пользователь является администратором, ограничить его может только создатель бота",
+            "Данный пользователь является владельцем, его никто не может ограничить",
+            reply_markup=back_reply,
+        )
+        return
+    if user_id.user_status == 12 and not is_owner:
+        await message.answer(
+            "Данный пользователь является администратором, ограничить его может только владелец",
             reply_markup=back_reply,
         )
         return
 
-    status_text = await get_user_status(user_tg_id)
+    status_text = await get_user_status_text(user_tg_id)
 
     roles = [
         (3, "Администратор"),
@@ -89,17 +101,19 @@ async def handle_role_assignment(message: Message, user_tg_id: int):
         (0, "Пользователь с ограничениями"),
     ]
 
-    # Фильтруем текущую роль и создаем кнопки
-    available_roles = [
-        KeyboardButton(text=role_name)
-        for role_id, role_name in roles
-        if role_id != user.user_status
-    ]
+    available_roles = []
+    for role_id, role_name in roles:
+        # Пропускаем текущую роль пользователя
+        if role_id == user_id.user_status:
+            continue
+        # Скрываем "Администратор" для НЕ-владельцев
+        if role_id == 3 and not is_owner:
+            continue
+        available_roles.append(KeyboardButton(text=role_name))
 
-    # Создаем клавиатуру с правильной структурой
+    # Создаем клавиатуру
     keyboard = ReplyKeyboardMarkup(
-        keyboard=[[btn] for btn in available_roles]  # Каждая кнопка в отдельном ряду
-        + [[KeyboardButton(text="Назад")]],  # Добавляем кнопку назад в последний ряд
+        keyboard=[[btn] for btn in available_roles] + [[KeyboardButton(text="Назад")]],
         resize_keyboard=True,
     )
 
@@ -113,11 +127,9 @@ async def handle_role_assignment(message: Message, user_tg_id: int):
 async def exit(message: Message, state: FSMContext):
     user_id = message.from_user.id
     if not await admin_check(user_id):
-        user_role = await get_user_status(user_id)
+        user_role = await get_user_status_text(user_id)
         await return_to_user_menu(
-            user_id,
-            f"Вы - {user_role}, вам не доступно меню администратора!",
-            message,
+            user_id, f"Вы - {user_role}, вам не доступно админ-меню!", message
         )
     else:
         await state.set_state(Step.admin_menu)
@@ -162,14 +174,22 @@ async def role_change_exit(message: Message, state: FSMContext):
 
 @router.message(Step.give_roles, F.text == "Администратор")
 async def role_change_exit(message: Message, state: FSMContext):
-    data = await state.get_data()
-    tg_id = data.get("tg_id")
-    await change_status_user(tg_id, 3)
-    await state.update_data(tg_id=None)
-    await message.answer(
-        "Вы выдали данному пользователю роль администратора.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
-        reply_markup=back_reply,
-    )
+    user_id = message.from_user.id
+    if await owner_check(user_id):
+        data = await state.get_data()
+        tg_id = data.get("tg_id")
+        await change_status_user(tg_id, 3)
+        await state.update_data(tg_id=None)
+        await message.answer(
+            "Вы выдали данному пользователю роль администратора.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
+            reply_markup=back_reply,
+        )
+        await DispatcherHandler.send_message(tg_id, "Вы стали администратором!")
+    else:
+        await message.answer(
+            f"Администраторы не могут изменять роль других администаторов!",
+            reply_markup=back_reply,
+        )
 
 
 @router.message(Step.give_roles, F.text == "Менеджер")
@@ -182,6 +202,7 @@ async def role_change_exit(message: Message, state: FSMContext):
         "Вы выдали данному пользователю роль менеджера.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
+    await DispatcherHandler.send_message(tg_id, "Вы стали менеджером")
 
 
 @router.message(Step.give_roles, F.text == "Обычный пользователь")
@@ -193,6 +214,7 @@ async def role_change_exit(message: Message, state: FSMContext):
         "Вы выдали данному пользователю роль обычного пользователя.\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
+    await DispatcherHandler.send_message(tg_id, "Вы стали обычным пользователем")
 
 
 @router.message(Step.give_roles, F.text == "Пользователь с ограничениями")
@@ -215,13 +237,23 @@ async def role_change_exit(message: Message, state: FSMContext):
         "Все комментарии и оценки пользователя удалены\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
     )
+    await DispatcherHandler.send_message(
+        tg_id,
+        "Вы стали ограниченным пользователем, ваши оценки и комментарии полностью удалены",
+    )
 
 
 @router.message(Step.give_roles, F.text == "Не удалять")
-async def role_change_exit(message: Message):
+async def role_change_exit(message: Message, state: FSMContext):
+    data = await state.get_data()
+    tg_id = data.get("tg_id")
     await message.answer(
         "Оценки и комментарии остались нетронутыми\n\nЧтобы изменить роль другого пользователя, просто напишите его tg id ниже.",
         reply_markup=back_reply,
+    )
+    await DispatcherHandler.send_message(
+        tg_id,
+        "Вы стали ограниченным пользователем, ваши оценки и комментарии в целости и сохранности",
     )
 
 

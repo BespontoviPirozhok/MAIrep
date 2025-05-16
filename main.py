@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher
 # ОСТАЛЬНЫЕ ИМПОРТЫ
 import asyncio, logging, sys
 from database.models import async_main
+from roles.dispatcher_handler import DispatcherHandler
 from loaded_keys import TOKEN
 
 # КЛАВИАТУРЫ
@@ -19,7 +20,9 @@ from user_interface.comments_menu import router as comments_menu_rt
 from user_interface.main_menu import error_rt
 
 # РОУТЕРЫ
+bot = Bot(TOKEN)
 dp = Dispatcher()
+DispatcherHandler.set_data(bot, dp)
 dp.include_router(main_menu_rt)
 dp.include_router(edit_place_menu_rt)
 dp.include_router(admin_menu_rt)
@@ -41,7 +44,6 @@ logger = logging.getLogger(__name__)
 
 
 async def main() -> None:
-    bot = Bot(TOKEN)
 
     try:
         logger.info("Запуск бота")
