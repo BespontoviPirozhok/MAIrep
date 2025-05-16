@@ -1,7 +1,7 @@
 from sqlalchemy import Integer, Float, BigInteger, String, Date, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
-from loaded_keys import DB
+from loaded_dotenv import DB
 
 engine = create_async_engine(DB)
 

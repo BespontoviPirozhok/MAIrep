@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 import asyncio, logging, sys
 from database.models import async_main
 from roles.dispatcher_handler import DispatcherHandler
-from loaded_keys import TOKEN
+from loaded_dotenv import TOKEN
 
 # КЛАВИАТУРЫ
 from user_interface.main_menu import router as main_menu_rt

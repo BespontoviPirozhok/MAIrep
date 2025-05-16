@@ -1,5 +1,5 @@
 import aiohttp
-from loaded_keys import MAP_APIKEY
+from loaded_dotenv import MAP_APIKEY
 
 
 async def fetch_json(url):
