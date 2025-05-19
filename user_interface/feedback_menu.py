@@ -13,7 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from datetime import date
 from roles.roles_main import user_check
-from database.requests import add_comment, get_comments, delete_comment, get_place
+from database.requests import add_comment, get_comments, delete_comment
 from .search_menu import place_view_smart_reply, get_place_info_text
 
 

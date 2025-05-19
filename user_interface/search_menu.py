@@ -16,7 +16,7 @@ from user_interface.main_menu import return_to_user_menu, back_reply
 
 from roles.roles_main import user_check, manager_check
 
-from database.requests import get_place, add_place, get_comments, get_non_zero_ratings
+from database.requests import get_place, add_place, get_comments
 
 from map_and_events.map import map_search
 
@@ -116,14 +116,14 @@ async def get_place_info_text(place_id: int) -> str:
     temp_place = await get_place(place_id=place_id)
 
     if not non_zero:
-        text = 'Сына! Вскибиди чайник! (Оценок пока нет (и чая тоже))'
+        rating_text = "Оценок пока что нет"
     else:
         global_rating = sum(non_zero) / len(non_zero)
-        text = f'{'⭐' * round(global_rating)} {round(global_rating, 2)}'
+        rating_text = f"{'⭐' * round(global_rating)} {round(global_rating, 2)}"
 
     return f"""*{temp_place.name}*
     
-{text}
+{rating_text}
 
 Категория: {temp_place.category}
             

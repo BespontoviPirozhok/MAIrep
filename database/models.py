@@ -1,5 +1,5 @@
 from sqlalchemy import Integer, Float, BigInteger, String, Date, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
 from loaded_dotenv import DB
 
@@ -24,6 +24,27 @@ class User(Base):
 # статус 0 - ограниченный пользователь, 1 - обычный пользователь, 2 - менеджер, 3 - админ, 4 - владелец
 
 
+# class Place(Base):
+#     __tablename__ = "places"
+
+#     place_id: Mapped[int] = mapped_column(primary_key=True)
+#     name: Mapped[str] = mapped_column(String(50))
+#     category: Mapped[str] = mapped_column(String(30))
+#     address: Mapped[str] = mapped_column(String(200))
+#     description: Mapped[str] = mapped_column(String(200))
+
+
+# class Comment(Base):
+#     __tablename__ = "comments"
+
+#     comment_id: Mapped[int] = mapped_column(primary_key=True)
+#     commentator_tg_id = mapped_column(BigInteger)
+#     place_id: Mapped[int] = mapped_column(Integer)
+#     comment_text: Mapped[str] = mapped_column(String(200))
+#     commentator_rating: Mapped[int] = mapped_column(Integer)
+
+
+# models.py (дополнение)
 class Place(Base):
     __tablename__ = "places"
 
@@ -33,15 +54,23 @@ class Place(Base):
     address: Mapped[str] = mapped_column(String(200))
     description: Mapped[str] = mapped_column(String(200))
 
+    comments: Mapped[list["Comment"]] = relationship(
+        back_populates="place", lazy="raise"
+    )
+
 
 class Comment(Base):
     __tablename__ = "comments"
 
     comment_id: Mapped[int] = mapped_column(primary_key=True)
     commentator_tg_id = mapped_column(BigInteger)
-    place_id: Mapped[int] = mapped_column(Integer)
+    place_id: Mapped[int] = mapped_column(
+        ForeignKey("places.place_id")
+    )  # Явный ForeignKey
     comment_text: Mapped[str] = mapped_column(String(200))
     commentator_rating: Mapped[int] = mapped_column(Integer)
+
+    place: Mapped["Place"] = relationship(back_populates="comments", lazy="raise")
 
 
 class VisitedEvents(Base):

@@ -1,5 +1,5 @@
 from sqlalchemy import select, update, delete, func, and_, or_
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload, relationship
 from datetime import date
 from typing import List, Optional
 from dataclasses import dataclass
@@ -104,6 +104,65 @@ async def update_place(
         await session.commit()
 
 
+@dataclass
+class FullCommentData:
+    name: str
+    address: str
+    comment_text: str
+    commentator_rating: int
+
+
+# async def get_full_comment_data_by_user(tg_id: int) -> List[FullCommentData]:
+#     all_comments = await get_comments(commentator_tg_id=tg_id)
+#     place_ids = {comment.place_id for comment in all_comments}
+
+#     # Получаем все места, связанные с этими place_id
+#     places_dict = {}
+#     async with async_sessions() as session:
+#         query = select(Place).where(Place.place_id.in_(place_ids))
+#         result = await session.scalars(query)
+#         for place in result.all():
+#             places_dict[place.place_id] = place
+
+#     # Собираем итоговые данные
+#     full_data_list = []
+#     for comment in all_comments:
+#         place = places_dict.get(comment.place_id)
+#         if place:
+#             full_data_list.append(
+#                 FullCommentData(
+#                     name=place.name,
+#                     address=place.address,
+#                     comment_text=comment.comment_text,
+#                     commentator_rating=comment.commentator_rating,
+#                 )
+#             )
+#     return full_data_list
+
+
+async def get_full_comment_data_by_user(tg_id: int):
+    async with async_sessions() as session:
+        # Загрузка комментариев с местами в одном запросе
+        query = (
+            select(Comment)
+            .options(selectinload(Comment.place))  # Жадная загрузка
+            .where(Comment.commentator_tg_id == tg_id)
+        )
+
+        result = await session.scalars(query)
+        comments = result.all()
+
+        return [
+            FullCommentData(
+                name=comment.place.name,
+                address=comment.place.address,
+                comment_text=comment.comment_text,
+                commentator_rating=comment.commentator_rating,
+            )
+            for comment in comments
+        ]
+
+
 # Таблица комментариев
 async def add_comment(
     commentator_tg_id: int,
@@ -123,17 +182,40 @@ async def add_comment(
         await session.commit()
 
 
+from sqlalchemy.orm import selectinload
+
+
 async def get_comments(
-    place_id: Optional[int] = None, commentator_tg_id: Optional[int] = None
+    place_id: Optional[int] = None,
+    commentator_tg_id: Optional[int] = None,
+    load_place: bool = False,  # Новая опция загрузки
 ) -> List[Comment]:
     async with async_sessions() as session:
         query = select(Comment)
+
+        if load_place:
+            query = query.options(selectinload(Comment.place))
+
         if place_id:
             query = query.where(Comment.place_id == place_id)
         if commentator_tg_id:
             query = query.where(Comment.commentator_tg_id == commentator_tg_id)
+
         result = await session.scalars(query)
         return result.all()
+
+
+# async def get_comments(
+#     place_id: Optional[int] = None, commentator_tg_id: Optional[int] = None
+# ) -> List[Comment]:
+#     async with async_sessions() as session:
+#         query = select(Comment)
+#         if place_id:
+#             query = query.where(Comment.place_id == place_id)
+#         if commentator_tg_id:
+#             query = query.where(Comment.commentator_tg_id == commentator_tg_id)
+#         result = await session.scalars(query)
+#         return result.all()
 
 
 async def delete_comment(
@@ -183,21 +265,22 @@ async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
         )
         await session.commit()
 
+
 # таблица мероприятий
-async def get_visits(user_tg_id: int) -> List[VisitedEvents]:
+async def get_events(user_tg_id: int) -> List[VisitedEvents]:
     async with async_sessions() as session:
         query = select(VisitedEvents).where(VisitedEvents.user_tg_id == user_tg_id)
         result = await session.scalars(query.order_by(VisitedEvents.visit_id.desc()))
         return result.all()
 
 
-async def add_visit(user_tg_id: int, review_text: str) -> None:
+async def add_event(user_tg_id: int, review_text: str) -> None:
     async with async_sessions() as session:
         session.add(VisitedEvents(user_tg_id=user_tg_id, review_text=review_text))
         await session.commit()
 
 
-async def delete_visit(user_tg_id: int, visit_id: int) -> None:
+async def delete_event(user_tg_id: int, visit_id: int) -> None:
     """Удалить визит по ID, только если он принадлежит указанному пользователю"""
     async with async_sessions() as session:
         await session.execute(
