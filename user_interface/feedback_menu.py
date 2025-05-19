@@ -105,7 +105,7 @@ async def rating(message: Message, state: FSMContext):
             commentator_tg_id=tg_id,
             place_id=place_id,
             text="",
-            rating="",
+            rating=0,
         )
         await message.answer(
             f"Вы посетили место {current_place_name}!",
@@ -141,7 +141,7 @@ async def no_review_visit(callback: CallbackQuery, state: FSMContext):
         commentator_tg_id=tg_id,
         place_id=place_id,
         text="",
-        rating="",
+        rating=0,
     )
     await callback.message.answer(
         f"Вы посетили *{current_place_name}* без оценки", parse_mode="MARKDOWN"
