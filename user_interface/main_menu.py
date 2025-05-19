@@ -64,7 +64,7 @@ async def return_to_user_menu(
         )
 
 
-def pretty_date(date_str: str) -> str:
+async def pretty_date(date_str: str) -> str:
     months_ru = [
         "января",
         "февраля",
