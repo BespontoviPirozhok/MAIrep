@@ -35,11 +35,13 @@ async def back_from_comments(message: Message, state: FSMContext):
         reply_markup=await place_view_smart_reply(
             tg_id=message.from_user.id, place_id=place_id
         ),
+        parse_mode="MARKDOWN",
     )
 
 
 @router.message(Step.place_view, F.text == "Посмотреть комментарии")
 async def show_comments(message: Message, state: FSMContext):
+    tg_id = message.from_user.id
     data = await state.get_data()
     place_id = data.get("place_id")
     await state.set_state(Step.сomments_list)
@@ -50,7 +52,11 @@ async def show_comments(message: Message, state: FSMContext):
     all_comments = filtered_comments
 
     if not all_comments:
-        await message.answer("🧑💻 Никто еще не написал комментарий")
+        await message.answer(
+            "🧑💻 Никто еще не написал комментарий",
+            reply_markup=await place_view_smart_reply(tg_id, place_id),
+        )
+        await state.set_state(Step.place_view)
 
     else:
         # Инициализируем пагинацию
@@ -62,8 +68,8 @@ async def show_comments(message: Message, state: FSMContext):
 
 async def show_more_comments(message: Message, state: FSMContext):
     data = await state.get_data()
-    all_comments = data["all_comments"]
-    offset = data["comment_offset"]
+    all_comments = data.get("all_comments")
+    offset = data.get("comment_offset")
 
     # Определяем порцию комментариев
     BATCH_SIZE = 5

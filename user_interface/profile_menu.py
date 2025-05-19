@@ -14,6 +14,7 @@ from aiogram import F
 from datetime import date
 
 from .main_menu import return_to_user_menu, pretty_date
+from database.requests import get_user
 
 router = Router()
 
@@ -107,7 +108,9 @@ async def profile(message: Message, state: FSMContext):
 async def exit(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     await state.clear()
-    await return_to_user_menu("Операция отменена", callback.message)
+    await return_to_user_menu(
+        callback.from_user.id, "Операция отменена", callback.message
+    )
 
 
 @router.callback_query(F.data == "reg_date")

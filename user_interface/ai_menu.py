@@ -30,6 +30,7 @@ ai_advice_keyboard = ReplyKeyboardMarkup(
         [KeyboardButton(text="Назад")],
     ],
     resize_keyboard=True,
+    input_field_placeholder="Выберите пункт",
 )
 
 
@@ -48,7 +49,7 @@ async def help(message: Message, state: FSMContext):
 @router.message(Step.ai_chat, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu("Операция отменена", message)
+    await return_to_user_menu(message.from_user.id, "Операция отменена", message)
 
 
 @router.message(Step.ai_chat, F.text == "Маршрут построен 😎")
@@ -82,5 +83,6 @@ async def sending_message_to_ai(message: Message, state: FSMContext):
     request_to_ai = message.text
     print(request_to_ai)
     await message.answer_sticker(
-        r"CAACAgIAAxkBAAEOZD9oEnDFvWYOx4FG4HSPqijWCx8iPwACqGAAAn_xWUq5KNvV3mYaEDYE"
+        r"CAACAgIAAxkBAAEOZD9oEnDFvWYOx4FG4HSPqijWCx8iPwACqGAAAn_xWUq5KNvV3mYaEDYE",
+        reply_markup=ai_chat_keyboard,
     )
