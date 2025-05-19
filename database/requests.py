@@ -183,60 +183,6 @@ async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
         )
         await session.commit()
 
-
-async def count_non_zero_ratings(
-    place_id: Optional[int] = None, 
-    commentator_tg_id: Optional[int] = None
-) -> List[Place]:
-    async with async_sessions() as session:
-        query = select(Place).join(Comment, Comment.place_id == Place.place_id)
-        query = query.where(Comment.commentator_rating != 0)
-        
-        if place_id:
-            query = query.where(Comment.place_id == place_id)
-        if commentator_tg_id:
-            query = query.where(Comment.commentator_tg_id == commentator_tg_id)
-            
-        result = await session.scalars(query.distinct())
-        return result.all()
-
-
-async def count_non_zero_comments(
-    place_id: Optional[int] = None, 
-    commentator_tg_id: Optional[int] = None
-) -> List[Place]:
-    async with async_sessions() as session:
-        query = select(Place).join(Comment, Comment.place_id == Place.place_id)
-        query = query.where(Comment.comment_text != '')
-        
-        if place_id:
-            query = query.where(Comment.place_id == place_id)
-        if commentator_tg_id:
-            query = query.where(Comment.commentator_tg_id == commentator_tg_id)
-            
-        result = await session.scalars(query.distinct())
-        return result.all()
-
-
-# тут надо конкретно переделывать функцию получения статистики, а может полностью ее убирать P.S - я удалил ненужные классы в начале кода и эта функция сломалась, так что я ее закомментировал
-# async def get_user_stats(
-#     tg_id: int,
-# ) -> "UserInfo":  # перепиши, чтобы можно было получать дату регистрации
-#     async with async_sessions() as session:
-#         user = await session.scalar(
-#             select(User)
-#             .where(User.tg_id == tg_id)
-#             .options(joinedload(User.comment), joinedload(User.visited_places))
-#         )
-#         if user:
-#             comments = [comment.text for comment in user.comments]
-#             places = [visit.place for visit in user.visited_places]
-#             return UserInfo(
-#                 comments=comments, places=places, reg_date=user.registration_date
-#             )
-#         return UserInfo(comments=[], places=[], reg_date=None)
-
-
 # таблица мероприятий
 async def get_visits(user_tg_id: int) -> List[VisitedEvents]:
     async with async_sessions() as session:

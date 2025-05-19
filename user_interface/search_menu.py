@@ -16,7 +16,7 @@ from user_interface.main_menu import return_to_user_menu, back_reply
 
 from roles.roles_main import user_check, manager_check
 
-from database.requests import get_place, add_place, get_comments
+from database.requests import get_place, add_place, get_comments, get_non_zero_ratings
 
 from map_and_events.map import map_search
 
@@ -111,10 +111,19 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
 
 
 async def get_place_info_text(place_id: int) -> str:
+    all_comments = await get_comments(place_id=place_id)
+    non_zero = [c.commentator_rating for c in all_comments if c.commentator_rating > 0]
     temp_place = await get_place(place_id=place_id)
+
+    if not non_zero:
+        text = 'Сына! Вскибиди чайник! (Оценок пока нет (и чая тоже))'
+    else:
+        global_rating = sum(non_zero) / len(non_zero)
+        text = f'{'⭐' * round(global_rating)} {round(global_rating, 2)}'
+
     return f"""*{temp_place.name}*
     
-⭐⭐⭐⭐⭐ 4.4 (эт заготовка есче)
+{text}
 
 Категория: {temp_place.category}
             
