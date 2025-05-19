@@ -14,7 +14,16 @@ from aiogram import F
 from datetime import date
 
 from .main_menu import return_to_user_menu, pretty_date
-from database.requests import get_user
+from database.requests import (
+    get_user,
+    get_comments,
+    count_non_zero_rating_comments
+)
+from roles.roles_main import (
+    admin_check,
+    get_user_status_text,
+    owner_check
+)
 
 router = Router()
 
@@ -26,7 +35,7 @@ class Step(StatesGroup):
     places_show = State()
 
 
-def compare_times(saved_date: tuple[int, int, int]) -> str:
+def compare_times(date_str: str) -> str:
     def plural_form(n: int, forms: tuple[str, str, str]) -> str:
         n = abs(n) % 100
         n1 = n % 10
@@ -34,9 +43,14 @@ def compare_times(saved_date: tuple[int, int, int]) -> str:
             return forms[2]
         return forms[0] if n1 == 1 else forms[1] if 2 <= n1 <= 4 else forms[2]
 
-    # Создаем объекты даты из кортежей
-    saved_date = date(*saved_date)
+    # Разбираем строку даты
+    year, month, day = map(int, date_str.split('-'))
+    saved_date = date(year, month, day)
     current_date = date.today()
+
+    # Если дата регистрации совпадает с текущей датой
+    if saved_date == current_date:
+        return "Вы зарегистрировались сегодня"
 
     # Вычисляем абсолютную разницу в днях
     delta_days = abs((current_date - saved_date).days)
@@ -52,47 +66,60 @@ def compare_times(saved_date: tuple[int, int, int]) -> str:
         parts.append(f"{years} {plural_form(years, ('год', 'года', 'лет'))}")
     if months > 0:
         parts.append(f"{months} {plural_form(months, ('месяц', 'месяца', 'месяцев'))}")
-    if days > 0 or not parts:
+    if days > 0:
         parts.append(f"{days} {plural_form(days, ('день', 'дня', 'дней'))}")
 
     return f"Вы с нами уже: {' '.join(parts)}"
 
 
-# Форматированная информация — только для отображения, я пока не особо имею представление как жто будет выглядеть в БД
-info = [
-    (2023, 8, 12),  # 12 августа 2023 года
-    2,  # отзывы
-    4,  # комментарии
-    7,  # места
-]
 
-profile_keyboard = InlineKeyboardMarkup(
+async def def_keyboard(tg_id: int, message: Message):
+    user_info = await get_user(tg_id)
+    reg_date = user_info.regist_date
+    status_text = await get_user_status_text(tg_id)
+    all_comments = await get_comments(None, tg_id)
+    non_zero_comments = await count_non_zero_rating_comments(None, tg_id)
+
+    profile_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
-                text=f"   Дата регистрации: {pretty_date("2025-12-3")}   ",
+                text=f"   Дата регистрации: {await pretty_date(str(reg_date))}   ",
                 callback_data="reg_date",
             )
         ],
+
         [
             InlineKeyboardButton(
-                text=f"Кол-во отзывов: {info[1]}", callback_data="reviews"
+                text=f"Кол-во посещённых мест: {len(all_comments)}", callback_data="places"
             )
         ],
+
         [
             InlineKeyboardButton(
-                text=f"Кол-во комментариев: {info[2]}", callback_data="comments"
+                text=f"Кол-во оценок: {non_zero_comments}", callback_data="reviews"
             )
         ],
+
         [
             InlineKeyboardButton(
-                text=f"Кол-во посещенных мест: {info[3]}", callback_data="places"
+                text=f"Кол-во комментариев: {non_zero_comments}", callback_data="reviews"
             )
         ],
+    
+        [
+            InlineKeyboardButton(
+                text=f"Кол-во посещённых мероприятий: 42", callback_data="events"
+            )
+        ],
+        
         [InlineKeyboardButton(text="Назад", callback_data="back")],
     ],
     input_field_placeholder="Выберите пункт",
 )
+    await message.answer(f"Меню профиля:\nВаша роль: {status_text}", reply_markup=profile_keyboard)
+    print(non_zero_comments)
+    
 
 
 @router.message(F.text == "👤 Профиль")
@@ -101,7 +128,8 @@ async def profile(message: Message, state: FSMContext):
     await message.answer(
         "Загрузка вашего профиля 🌐", reply_markup=ReplyKeyboardRemove()
     )
-    await message.answer("Меню профиля:", reply_markup=profile_keyboard)
+    user_id = message.from_user.id
+    await def_keyboard(user_id, message)
 
 
 @router.callback_query(F.data == "back")
@@ -115,4 +143,6 @@ async def exit(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "reg_date")
 async def show_reg_date(callback: CallbackQuery):
-    await callback.answer(compare_times(info[0]), show_alert=True)
+    user_info = await get_user(callback.from_user.id)
+    reg_date = str(user_info.regist_date)
+    await callback.answer(compare_times(reg_date), show_alert=True)
