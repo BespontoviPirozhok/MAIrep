@@ -17,7 +17,8 @@ from .main_menu import return_to_user_menu, pretty_date
 from database.requests import (
     get_user,
     get_comments,
-    count_non_zero_rating_comments
+    count_non_zero_ratings,
+    count_non_zero_comments
 )
 from roles.roles_main import (
     admin_check,
@@ -73,14 +74,16 @@ def compare_times(date_str: str) -> str:
 
 
 
-async def def_keyboard(tg_id: int, message: Message):
+async def profile_keyboard(tg_id: int, message: Message):
     user_info = await get_user(tg_id)
     reg_date = user_info.regist_date
     status_text = await get_user_status_text(tg_id)
     all_comments = await get_comments(None, tg_id)
-    non_zero_comments = await count_non_zero_rating_comments(None, tg_id)
+    non_zero_ratings = await count_non_zero_ratings(None, tg_id)
+    non_zero_comments = await count_non_zero_comments(None, tg_id)
 
-    profile_keyboard = InlineKeyboardMarkup(
+
+    keyboard = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -97,19 +100,19 @@ async def def_keyboard(tg_id: int, message: Message):
 
         [
             InlineKeyboardButton(
-                text=f"Кол-во оценок: {non_zero_comments}", callback_data="reviews"
+                text=f"Кол-во оценок: {len(non_zero_ratings)}", callback_data="visits"
             )
         ],
 
         [
             InlineKeyboardButton(
-                text=f"Кол-во комментариев: {non_zero_comments}", callback_data="reviews"
+                text=f"Кол-во комментариев: {len(non_zero_comments)}", callback_data="reviews"
             )
         ],
     
         [
             InlineKeyboardButton(
-                text=f"Кол-во посещённых мероприятий: 42", callback_data="events"
+                text=f"Кол-во посещённых мероприятий: 42 братуха", callback_data="events"
             )
         ],
         
@@ -117,8 +120,7 @@ async def def_keyboard(tg_id: int, message: Message):
     ],
     input_field_placeholder="Выберите пункт",
 )
-    await message.answer(f"Меню профиля:\nВаша роль: {status_text}", reply_markup=profile_keyboard)
-    print(non_zero_comments)
+    await message.answer(f"Меню профиля:\nВаша роль: {status_text}", reply_markup=keyboard)
     
 
 
@@ -129,7 +131,7 @@ async def profile(message: Message, state: FSMContext):
         "Загрузка вашего профиля 🌐", reply_markup=ReplyKeyboardRemove()
     )
     user_id = message.from_user.id
-    await def_keyboard(user_id, message)
+    await profile_keyboard(user_id, message)
 
 
 @router.callback_query(F.data == "back")

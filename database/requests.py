@@ -184,20 +184,38 @@ async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
         await session.commit()
 
 
-async def count_non_zero_rating_comments(
+async def count_non_zero_ratings(
     place_id: Optional[int] = None, 
     commentator_tg_id: Optional[int] = None
-) -> int:
+) -> List[Place]:
     async with async_sessions() as session:
-        query = select(func.count()).where(Comment.commentator_rating != 0)
+        query = select(Place).join(Comment, Comment.place_id == Place.place_id)
+        query = query.where(Comment.commentator_rating != 0)
         
         if place_id:
             query = query.where(Comment.place_id == place_id)
         if commentator_tg_id:
             query = query.where(Comment.commentator_tg_id == commentator_tg_id)
             
-        result = await session.scalar(query)
-        return result or 0
+        result = await session.scalars(query.distinct())
+        return result.all()
+
+
+async def count_non_zero_comments(
+    place_id: Optional[int] = None, 
+    commentator_tg_id: Optional[int] = None
+) -> List[Place]:
+    async with async_sessions() as session:
+        query = select(Place).join(Comment, Comment.place_id == Place.place_id)
+        query = query.where(Comment.comment_text != '')
+        
+        if place_id:
+            query = query.where(Comment.place_id == place_id)
+        if commentator_tg_id:
+            query = query.where(Comment.commentator_tg_id == commentator_tg_id)
+            
+        result = await session.scalars(query.distinct())
+        return result.all()
 
 
 # тут надо конкретно переделывать функцию получения статистики, а может полностью ее убирать P.S - я удалил ненужные классы в начале кода и эта функция сломалась, так что я ее закомментировал
