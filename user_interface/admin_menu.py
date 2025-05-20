@@ -26,9 +26,6 @@ from roles.roles_main import (
 )
 
 from database.requests import (
-    get_place,
-    add_place,
-    get_comments,
     get_user,
     change_status_user,
     delete_all_user_non_empty_comments,
@@ -37,11 +34,18 @@ from database.requests import (
 
 router = Router()
 
+
+class Step(StatesGroup):
+    admin_menu = State()
+    give_roles = State()
+    ban_unban = State()
+
+
 admin_extended_reply = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="Изменить роль пользователя"),
-            KeyboardButton(text="Что нужно сделать тимлиду?"),
+            KeyboardButton(text="Удаление комментариев"),
         ],
         [
             KeyboardButton(text="👤 Профиль"),
@@ -51,7 +55,7 @@ admin_extended_reply = ReplyKeyboardMarkup(
     is_persistent=True,
     input_field_placeholder="Выберите пункт",
 )
-delete_comments_reply = ReplyKeyboardMarkup(
+delete_all_user_comments_reply = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="Удалить"),
@@ -64,12 +68,6 @@ delete_comments_reply = ReplyKeyboardMarkup(
     input_field_placeholder="Выберите пункт",
     resize_keyboard=True,
 )
-
-
-class Step(StatesGroup):
-    admin_menu = State()
-    give_roles = State()
-    ban_unban = State()
 
 
 async def handle_role_assignment(message: Message, user_tg_id: int):
@@ -224,7 +222,7 @@ async def role_change_exit(message: Message, state: FSMContext):
     await change_status_user(tg_id, 0)
     await message.answer(
         "Вы ограничили данного пользователя.\n\nВы также можете удалить все уже существующие комментарии и оценки этого пользователя безвозратно.",
-        reply_markup=delete_comments_reply,
+        reply_markup=delete_all_user_comments_reply,
     )
 
 

@@ -13,6 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from database.requests import get_comments
+from roles.roles_main import admin_check
 from .search_menu import place_view_smart_reply, get_place_info_text
 from .main_menu import pretty_date, back_reply
 
@@ -47,9 +48,8 @@ async def show_comments(message: Message, state: FSMContext):
     await state.set_state(Step.сomments_list)
 
     # Получаем и сортируем комментарии
-    raw_comments = await get_comments(place_id=place_id)
-    filtered_comments = [c for c in raw_comments if c.comment_text.strip()]
-    all_comments = filtered_comments
+    raw_comments = await get_comments(place_id=place_id, filter_empty_text=True)
+    all_comments = raw_comments
 
     if not all_comments:
         await message.answer(

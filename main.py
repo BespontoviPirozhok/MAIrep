@@ -10,6 +10,7 @@ from loaded_dotenv import TOKEN
 # КЛАВИАТУРЫ
 from user_interface.main_menu import router as main_menu_rt
 from user_interface.admin_menu import router as admin_menu_rt
+from user_interface.delete_comments_menu import router as delete_comments_rt
 from user_interface.edit_place_menu import router as edit_place_menu_rt
 from user_interface.event_menu import router as event_menu_rt
 from user_interface.search_menu import router as search_menu_rt
@@ -26,6 +27,7 @@ DispatcherHandler.set_data(bot, dp)
 dp.include_router(main_menu_rt)
 dp.include_router(edit_place_menu_rt)
 dp.include_router(admin_menu_rt)
+dp.include_router(delete_comments_rt)
 dp.include_router(search_menu_rt)
 dp.include_router(event_menu_rt)
 dp.include_router(ai_menu_rt)

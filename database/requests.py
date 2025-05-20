@@ -112,34 +112,6 @@ class FullCommentData:
     commentator_rating: int
 
 
-# async def get_full_comment_data_by_user(tg_id: int) -> List[FullCommentData]:
-#     all_comments = await get_comments(commentator_tg_id=tg_id)
-#     place_ids = {comment.place_id for comment in all_comments}
-
-#     # Получаем все места, связанные с этими place_id
-#     places_dict = {}
-#     async with async_sessions() as session:
-#         query = select(Place).where(Place.place_id.in_(place_ids))
-#         result = await session.scalars(query)
-#         for place in result.all():
-#             places_dict[place.place_id] = place
-
-#     # Собираем итоговые данные
-#     full_data_list = []
-#     for comment in all_comments:
-#         place = places_dict.get(comment.place_id)
-#         if place:
-#             full_data_list.append(
-#                 FullCommentData(
-#                     name=place.name,
-#                     address=place.address,
-#                     comment_text=comment.comment_text,
-#                     commentator_rating=comment.commentator_rating,
-#                 )
-#             )
-#     return full_data_list
-
-
 async def get_full_comment_data_by_user(tg_id: int):
     async with async_sessions() as session:
         # Загрузка комментариев с местами в одном запросе
@@ -188,7 +160,8 @@ from sqlalchemy.orm import selectinload
 async def get_comments(
     place_id: Optional[int] = None,
     commentator_tg_id: Optional[int] = None,
-    load_place: bool = False,  # Новая опция загрузки
+    load_place: bool = False,
+    filter_empty_text: bool = False,
 ) -> List[Comment]:
     async with async_sessions() as session:
         query = select(Comment)
@@ -196,37 +169,32 @@ async def get_comments(
         if load_place:
             query = query.options(selectinload(Comment.place))
 
+        # Собираем условия фильтрации
+        conditions = []
         if place_id:
-            query = query.where(Comment.place_id == place_id)
+            conditions.append(Comment.place_id == place_id)
         if commentator_tg_id:
-            query = query.where(Comment.commentator_tg_id == commentator_tg_id)
+            conditions.append(Comment.commentator_tg_id == commentator_tg_id)
+        if filter_empty_text:
+            conditions.append(Comment.comment_text != "")
+
+        if conditions:
+            query = query.where(and_(*conditions))
 
         result = await session.scalars(query)
         return result.all()
 
 
-# async def get_comments(
-#     place_id: Optional[int] = None, commentator_tg_id: Optional[int] = None
-# ) -> List[Comment]:
-#     async with async_sessions() as session:
-#         query = select(Comment)
-#         if place_id:
-#             query = query.where(Comment.place_id == place_id)
-#         if commentator_tg_id:
-#             query = query.where(Comment.commentator_tg_id == commentator_tg_id)
-#         result = await session.scalars(query)
-#         return result.all()
-
-
-async def delete_comment(
-    commentator_tg_id: int, place_id: Optional[int] = None
-) -> None:
+async def delete_comment(commentator_tg_id: int, place_id: int) -> None:
     async with async_sessions() as session:
-        conditions = [Comment.commentator_tg_id == commentator_tg_id]
-        if place_id is not None:
-            conditions.append(Comment.place_id == place_id)
-
-        await session.execute(delete(Comment).where(and_(*conditions)))
+        await session.execute(
+            delete(Comment).where(
+                and_(
+                    Comment.commentator_tg_id == commentator_tg_id,
+                    Comment.place_id == place_id,
+                )
+            )
+        )
         await session.commit()
 
 
