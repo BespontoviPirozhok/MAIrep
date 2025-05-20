@@ -110,6 +110,7 @@ class FullCommentData:
     address: str
     comment_text: str
     commentator_rating: int
+    place_id: int
 
 
 async def get_full_comment_data_by_user(tg_id: int):
@@ -130,6 +131,7 @@ async def get_full_comment_data_by_user(tg_id: int):
                 address=comment.place.address,
                 comment_text=comment.comment_text,
                 commentator_rating=comment.commentator_rating,
+                place_id=comment.place_id,
             )
             for comment in comments
         ]
@@ -164,10 +166,10 @@ async def get_comments(
     filter_empty_text: bool = False,
 ) -> List[Comment]:
     async with async_sessions() as session:
-        query = select(Comment)
+        query = select(Comment).join(Place)
 
         if load_place:
-            query = query.options(selectinload(Comment.place))
+            query = query.options(joinedload(Comment.place))
 
         # Собираем условия фильтрации
         conditions = []

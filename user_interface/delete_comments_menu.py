@@ -4,37 +4,49 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
+    ReplyKeyboardMarkup,
+    KeyboardButton,
 )
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram import Router, F
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
-from database.requests import (
-    get_comments,
-    delete_comment,
-    get_full_comment_data_by_user,
-)
-from roles.roles_main import admin_check
+from database.requests import get_comments, delete_comment
+from roles.roles_main import admin_check, get_user_status_text
+from .main_menu import return_to_user_menu
+from .admin_menu import admin_extended_reply
 
 router = Router()
 
 
-class State(StatesGroup):
+class Step(StatesGroup):
     admin_menu = State()
-    viewing_comments = State()
+    comment_delete_list = State()
     confirm_delete = State()
 
 
-# Восстановленный обработчик входа
-@router.message(F.text == "Удаление комментариев")
+confirm_delete_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Удалить")],
+        [
+            KeyboardButton(text="Отмена"),
+        ],
+    ],
+    resize_keyboard=True,
+)
+
+
+@router.message(Step.admin_menu, F.text == "Удаление комментариев")
 async def show_all_comments(message: Message, state: FSMContext):
-    if not await admin_check(message.from_user.id):
-        await message.answer("⛔ Доступ запрещён")
+    tg_id = message.from_user.id
+    if not await admin_check(tg_id):
+        await return_to_user_menu(
+            tg_id, "У вас нет права удалять комменатрии!", message
+        )
         return
 
     all_comments = await get_comments(load_place=True, filter_empty_text=True)
+    await state.set_state(Step.comment_delete_list)
     await state.update_data(all_comments=all_comments, current_page=0)
-    await state.set_state(State.viewing_comments)
     await display_comments_batch(message, state)
 
 
@@ -43,20 +55,34 @@ async def display_comments_batch(message: Message, state: FSMContext):
     all_comments = data.get("all_comments", [])
     page = data.get("current_page", 0)
 
+    # Корректируем номер страницы если он превышает максимум
+    max_page = max(0, (len(all_comments) - 1) // 3)
+    if page > max_page:
+        page = max_page
+        await state.update_data(current_page=page)
+
+    total_comments = len(all_comments)
     start_idx = page * 3
     end_idx = start_idx + 3
     batch = all_comments[start_idx:end_idx]
 
-    if not batch:
-        await message.answer("📭 Нет комментариев для отображения")
+    # Если комментариев нет вообще
+    if not batch and page == 0:
+        await message.answer("Комментариев нет")
+        await state.set_state(Step.admin_menu)
+        return
+    elif not batch:  # Если страница пуста, но есть предыдущие
+        await state.update_data(current_page=page - 1)
+        await display_comments_batch(message, state)
         return
 
+    # Отображение комментариев
     for comment in batch:
         await message.answer(
-            f"🏷 Место: {comment.place.name}\n"
-            f"👤 Пользователь: {comment.commentator_tg_id}\n"
-            f"⭐ Оценка: {comment.commentator_rating}/5\n"
-            f"📝 Комментарий: {comment.comment_text}",
+            f"Место: <b>{comment.place.name}</b>\n"
+            f"TG_ID: <code>{comment.commentator_tg_id}</code> ({await get_user_status_text(comment.commentator_tg_id)})\n\n"
+            f"{comment.comment_text}",
+            parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(
                 inline_keyboard=[
                     [
@@ -69,107 +95,99 @@ async def display_comments_batch(message: Message, state: FSMContext):
             ),
         )
 
+    # Управление пагинацией
     control_buttons = []
     if len(all_comments) > end_idx:
-        control_buttons.append(
-            InlineKeyboardButton(
-                text="📜 Показать ещё", callback_data="next_comments_page"
-            )
-        )
+        control_buttons.append([KeyboardButton(text="Показать ещё")])
 
     control_buttons.append(
-        InlineKeyboardButton(text="🔙 Назад", callback_data="exit_comments")
+        [KeyboardButton(text="Назад", callback_data="exit_comments")]
     )
+
+    # Текст с прогрессом
+    shown_comments = min(end_idx, total_comments)
+    progress_text = f"Показано {shown_comments} из {total_comments} комментариев"
 
     await message.answer(
-        f"📖 Страница {page + 1}",
-        reply_markup=InlineKeyboardMarkup(inline_keyboard=[control_buttons]),
+        text=progress_text,
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=control_buttons,
+            input_field_placeholder=f"Страница {page + 1}",
+            resize_keyboard=True,
+        ),
     )
 
 
-@router.callback_query(F.data.startswith("delete_"))
+@router.callback_query(Step.comment_delete_list, F.data.startswith("delete_"))
 async def handle_delete_start(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Step.confirm_delete)
     _, tg_id, place_id = callback.data.split("_")
-    tg_id = int(tg_id)
-    place_id = int(place_id)
 
-    # Получаем полные данные комментария
-    comments = await get_comments(
-        commentator_tg_id=tg_id, place_id=place_id, load_place=True
-    )
-
-    if not comments:
-        await callback.answer("Комментарий не найден!")
-        return
-
-    comment = comments[0]
-
+    # Используем данные из callback_data без запроса к БД
     await state.update_data(
-        del_tg_id=tg_id,
-        del_place_id=place_id,
-        comment_text=comment.comment_text,
-        place_name=comment.place.name,
+        del_tg_id=int(tg_id),
+        del_place_id=int(place_id),
     )
 
+    # Получаем текст комментария из state (если требуется)
+    data = await state.get_data()
+    all_comments = data.get("all_comments", [])
+
+    # Ищем комментарий в локальном кэше
+    target_comment = next(
+        (
+            c
+            for c in all_comments
+            if c.commentator_tg_id == int(tg_id) and c.place_id == int(place_id)
+        ),
+        None,
+    )
+
+    # Формируем сообщение из локальных данных
     preview_message = (
-        "🗑 Вы собираетесь удалить комментарий:\n\n"
-        f"🏷 Место: {comment.place.name}\n"
-        f"📝 Текст: {comment.comment_text}\n\n"
-        "❓ Подтвердите удаление:"
+        "Вы собираетесь удалить комментарий:\n\n"
+        f"Место: <b>{target_comment.place.name}</b>\n"
+        f"TG_ID: <code>{tg_id}</code> ({await get_user_status_text(tg_id)})\n\n"
+        f"{target_comment.comment_text}"
     )
 
     await callback.message.answer(
-        preview_message,
-        reply_markup=InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="✅ Подтвердить", callback_data="confirm_del"
-                    ),
-                    InlineKeyboardButton(text="❌ Отмена", callback_data="cancel_del"),
-                ]
-            ]
-        ),
+        preview_message, parse_mode="HTML", reply_markup=confirm_delete_reply
     )
-    await state.set_state(State.confirm_delete)
     await callback.answer()
 
 
-@router.callback_query(State.confirm_delete, F.data == "confirm_del")
-async def handle_confirm_delete(callback: CallbackQuery, state: FSMContext):
+@router.message(Step.confirm_delete, F.text == "Удалить")
+async def handle_confirm_delete(message: Message, state: FSMContext):
     data = await state.get_data()
 
     await delete_comment(
         commentator_tg_id=data["del_tg_id"], place_id=data["del_place_id"]
     )
 
-    await callback.message.answer("Комментарий удален")
+    await message.answer("Комментарий удален, возращаемся к просмотру комментариев")
 
     all_comments = await get_comments(load_place=True, filter_empty_text=True)
-    await state.update_data(all_comments=all_comments, current_page=0)
-    await state.set_state(State.viewing_comments)
-    await display_comments_batch(callback.message, state)
-    await callback.answer()
+    await state.update_data(all_comments=all_comments)
+    await state.set_state(Step.comment_delete_list)
+    await display_comments_batch(message, state)
 
 
-@router.callback_query(State.confirm_delete, F.data == "cancel_del")
-async def handle_cancel_delete(callback: CallbackQuery, state: FSMContext):
-    await state.set_state(State.viewing_comments)
-    await callback.message.delete()
-    await callback.answer()
+@router.message(Step.confirm_delete, F.text == "Отмена")
+async def handle_cancel_delete(message: Message, state: FSMContext):
+    await state.set_state(Step.comment_delete_list)
+    await display_comments_batch(message, state)
 
 
-@router.callback_query(F.data == "next_comments_page")
-async def next_page(callback: CallbackQuery, state: FSMContext):
+@router.message(Step.comment_delete_list, F.text == "Показать ещё")
+async def next_page(message: Message, state: FSMContext):
     data = await state.get_data()
     current_page = data.get("current_page", 0)
     await state.update_data(current_page=current_page + 1)
-    await display_comments_batch(callback.message, state)
-    await callback.answer()
+    await display_comments_batch(message, state)
 
 
-@router.callback_query(F.data == "exit_comments")
-async def exit_comments(callback: CallbackQuery, state: FSMContext):
-    await state.clear()
-    await callback.message.answer("🏠 Возврат в главное меню")
-    await callback.answer()
+@router.message(Step.comment_delete_list, F.text == "Назад")
+async def exit_delete_comments(message: Message, state: FSMContext):
+    await state.set_state(Step.admin_menu)
+    await message.answer("Возвращаемся к Админ-меню", reply_markup=admin_extended_reply)
