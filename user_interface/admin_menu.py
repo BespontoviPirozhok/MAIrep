@@ -150,14 +150,15 @@ async def role_change_welcome(message: Message, state: FSMContext):
     await state.set_state(Step.give_roles)
     await message.answer(
         """Справка о правах пользователей в зависимости от ролей:
-- *Ограниченный пользователь*: отметка/снятие отметки о посещении мест и мероприятий.
-- *Обычный пользователь*: добавление мест в базу данных, оставление комментариев и оценок.
-- *Менеджер* (включая права обычного пользователя): редактирование описаний и категорий мест.
-- *Администратор*: смена ролей пользователей (дополнительно ко всем предыдущим функциям).
+- <b>Ограниченный пользователь</b>: отметка/снятие отметки о посещении мест и мероприятий.
+- <b>Обычный пользователь</b>: добавление мест в базу данных, оставление комментариев и оценок.
+- <b>Менеджер</b> (включая права обычного пользователя): редактирование описаний и категорий мест.
+- <b>Администратор</b>: смена ролей пользователей (дополнительно ко всем предыдущим функциям).
 
-Введите ID пользователя для изменения его роли.""",
+Введите TG_ID или <code>@username</code> пользователя для изменения его роли. 
+Если ваше сообщение исчезло, это означает, что вы не можете изменить права данного пользователя.""",
         reply_markup=back_reply,
-        parse_mode="MARKDOWN",
+        parse_mode="HTML",
     )
 
 
@@ -257,35 +258,36 @@ async def role_change_exit(message: Message, state: FSMContext):
 
 @router.message(Step.give_roles)
 async def role_change_menu(message: Message, state: FSMContext):
-    raw_tg_id = message.text
-    if len(raw_tg_id) < 8 or not raw_tg_id.isdigit():
-        await message.answer(
-            "Неверный тип данных!",
-            reply_markup=back_reply,
-        )
+    raw_input = message.text.strip()
+    user = None
+    tg_id = None
+
+    # Определение типа ввода
+    if raw_input.startswith("@"):
+        # Обработка username
+        tg_username = raw_input[1:]
+        user = await get_user(tg_username=tg_username)
+        if user:
+            tg_id = user.tg_id
+
+    elif raw_input.isdigit():
+        # Обработка ID
+        tg_id = int(raw_input)
+        user = await get_user(tg_id)
+    else:
+        await message.delete()
         return
 
-    tg_id = int(raw_tg_id)
-    if not await get_user(tg_id):
-        await message.answer(
-            "Данный пользователь не пользуется ботом!",
-            reply_markup=back_reply,
-        )
-    elif tg_id == message.from_user.id:
-        await message.answer_sticker(
-            r"CAACAgIAAxkBAAEOeXpoI8k2d0KNlQNw-6N0yhw1FgF_NQACJkQAAlVjOUoDhSheRxpQOjYE"
-        )
-        await message.answer(
-            "Вы не можете уменьшить свои полномочия!", reply_markup=back_reply
-        )
-    else:
-        await handle_role_assignment(message, tg_id)
-        await state.update_data(tg_id=tg_id)
+    # Проверка существования пользователя
+    if not user:
+        await message.delete()
+        return
 
+    # Проверка самодеактивации
+    if tg_id == message.from_user.id:
+        await message.delete()
+        return
 
-@router.message(Step.admin_menu, F.text == "Что нужно сделать тимлиду?")
-async def role_change_welcome(message: Message, state: FSMContext):
-    await message.answer_sticker(
-        r"CAACAgIAAxkBAAEOeetoJG2GqFRopR3iPwYs1cXMJIXkRQACIiIAApfZIUhQxfUZvjllyjYE"
-    )
-    await message.answer("Тимлиду нужно поспать!", reply_markup=admin_extended_reply)
+    # Передача управления и сохранение данных
+    await handle_role_assignment(message, tg_id)
+    await state.update_data(tg_id=tg_id)

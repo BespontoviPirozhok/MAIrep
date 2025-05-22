@@ -28,7 +28,7 @@ class Step(StatesGroup):  # состояния
     place_view = State()  # просмотр информации о месте
 
 
-async def place_view_smart_reply(tg_id: int, place_id: str):
+async def place_view_smart_reply(tg_id: int, place_id: int):
     top_button_text = "Отметить это место как посещенное"
     if await get_comments(commentator_tg_id=tg_id, place_id=place_id):
         top_button_text = "Место уже посещено ✅"
@@ -58,10 +58,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
     )  # Выносим проверку пользователя вне цикла
 
     if not places_list:
-        await message.answer(
-            text="По вашему запросу ничего не нашлось, введите другой запрос",
-            reply_markup=back_reply,
-        )
+        await message.delete()
         return
 
     for index, place in enumerate(places_list, start=1):
@@ -105,7 +102,7 @@ async def places_search_view(places_list: list, message: Message, state: FSMCont
         )
 
     await message.answer(
-        """В списке нет нужного места? Попробуйте изменить свой запрос.""",
+        """В списке нет нужного места? Попробуйте изменить свой запрос.\nЕсли ваше сообщение пропало, значит по вашему запросу ничего не нашлось.""",
         reply_markup=back_reply,
     )
 
@@ -131,19 +128,20 @@ async def get_place_info_text(place_id: int) -> str:
             
 Описание: {temp_place.description}
 
-Сводка комментариев: АЛЕ ИЛЮША ГДЕ НЕЙРОНКА?
+Сводка комментариев: АЛЕ ИЛЮША ГДЕ НЕЙРОНКА?{temp_place.avg_comment}
 """
 
 
 @router.message(F.text == "🔍 Поиск мест")
-async def search(message: Message, state: FSMContext):
+async def search_places(message: Message, state: FSMContext):
     await state.set_state(Step.search_input)
     await message.answer(
         """
 Рядом названием каждого места есть специальный значок:
 ✅ - Вы уже посетили данное место;
 🌎 - Место есть в базе данных, возможно у него уже есть оценки и комментарии;
-🌐 - Места еще нет в базе данных, но вы можете его туда добавить;
+🌐 - Места еще нет в базе данных, но вы можете его туда добавить.
+Если ваше сообщение пропало, значит по вашему запросу ничего не нашлось.
 """,
     )
     await message.answer(
@@ -199,7 +197,6 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
     await state.update_data(place_id=place_id)
     await state.update_data(place_name=place_in_db.name)
     place_info = await get_place_info_text(place_id=place_id)
-    await state.set_state(Step.place_view)
     await callback.message.answer(
         place_info,
         reply_markup=await place_view_smart_reply(tg_id=tg_id, place_id=place_id),

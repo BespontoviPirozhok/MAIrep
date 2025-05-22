@@ -20,11 +20,10 @@ async def map_search(request):
     apikey = MAP_APIKEY
     lang = "ru"
     results = 4
+    full_request = f"{BASE_URL}?apikey={apikey}&highlight=0&types=biz&text={request}&results={results}&lang={lang}"
 
     try:
-        data = await fetch_json(
-            f"{BASE_URL}?apikey={apikey}&highlight=0&types=biz&text={request}&results={results}&lang={lang}"
-        )
+        data = await fetch_json(full_request)
         places_list = []
 
         for result in data.get("results", []):

@@ -6,35 +6,57 @@ from dataclasses import dataclass
 
 
 from .models import async_sessions
-from .models import User, Place, Comment, VisitedEvents
+from .models import User, Place, Comment, Events
 
 
 # таблица пользователей - статус 0 - ограниченный пользователь, 1 - обычный пользователь, 2 - менеджер, 3 - админ
 async def add_user(
-    tg_id: int, regist_date: date, user_status: Optional[int] = 1
+    tg_id: int, tg_username: str, regist_date: date, user_status: Optional[int] = 1
 ) -> None:
     async with async_sessions() as session:
         user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
         if not user:
             session.add(
-                User(tg_id=tg_id, regist_date=regist_date, user_status=user_status)
+                User(
+                    tg_id=tg_id,
+                    tg_username=tg_username,
+                    regist_date=regist_date,
+                    user_status=user_status,
+                )
             )
             await session.commit()
 
 
-async def change_status_user(tg_id: int, user_status: Optional[int] = 1) -> None:
+# async def change_status_user(tg_id: int, user_status: Optional[int] = 1) -> None:
+#     async with async_sessions() as session:
+#         user = await session.scalar(select(User).where(User.tg_id == tg_id))
+
+#         if user:
+#             user.user_status = user_status
+
+#         await session.commit()
+
+
+async def change_status_user(
+    tg_id: Optional[int] = None, tg_username: Optional[str] = None, user_status: int = 1
+) -> None:
     async with async_sessions() as session:
-        user = await session.scalar(select(User).where(User.tg_id == tg_id))
+        if tg_id is not None:
+            query = select(User).where(User.tg_id == tg_id)
+        else:
+            query = select(User).where(User.tg_username == tg_username)
+
+        user = await session.scalar(query)
 
         if user:
             user.user_status = user_status
-
-        await session.commit()
+            await session.commit()
 
 
 async def get_user(
     tg_id: int = None,
+    tg_username: Optional[str] = None,
     regist_date: Optional[date] = None,
     user_status: Optional[int] = None,
 ) -> Optional[User]:
@@ -43,6 +65,8 @@ async def get_user(
 
         if tg_id:
             query = query.where(User.tg_id == tg_id)
+        if tg_username:
+            query = query.where(User.tg_username == tg_username)
         if regist_date:
             query = query.where(User.regist_date == regist_date)
         if user_status:
@@ -58,6 +82,7 @@ async def add_place(
     category: str,
     address: str,
     description: Optional[str] = "",
+    avg_comment: Optional[str] = "",
 ) -> None:
     async with async_sessions() as session:
         session.add(
@@ -66,6 +91,7 @@ async def add_place(
                 category=category,
                 address=address,
                 description=description,
+                avg_comment=avg_comment,
             )
         )
         await session.commit()
@@ -94,6 +120,7 @@ async def update_place(
     place_id: int,
     new_category: Optional[str] = None,
     new_description: Optional[str] = None,
+    new_avg_comment: Optional[str] = None,
 ) -> None:
     async with async_sessions() as session:
         place = await session.get(Place, place_id)
@@ -101,6 +128,8 @@ async def update_place(
             place.category = new_category
         if new_description:
             place.description = new_description
+        if new_avg_comment:
+            place.avg_comment = new_avg_comment
         await session.commit()
 
 
@@ -237,28 +266,40 @@ async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
 
 
 # таблица мероприятий
-async def get_events(user_tg_id: int) -> List[VisitedEvents]:
+async def add_event(
+    user_tg_id: int,
+    kudago_id: int,
+    event_name: str,
+    event_time: str,
+) -> None:
     async with async_sessions() as session:
-        query = select(VisitedEvents).where(VisitedEvents.user_tg_id == user_tg_id)
-        result = await session.scalars(query.order_by(VisitedEvents.visit_id.desc()))
-        return result.all()
-
-
-async def add_event(user_tg_id: int, review_text: str) -> None:
-    async with async_sessions() as session:
-        session.add(VisitedEvents(user_tg_id=user_tg_id, review_text=review_text))
+        session.add(
+            Events(
+                user_tg_id=user_tg_id,
+                kudago_id=kudago_id,
+                event_name=event_name,
+                event_time=event_time,
+            )
+        )
         await session.commit()
 
 
-async def delete_event(user_tg_id: int, visit_id: int) -> None:
-    """Удалить визит по ID, только если он принадлежит указанному пользователю"""
+async def get_events(tg_id: int, kudago_id: Optional[int] = None) -> List[Events]:
+    async with async_sessions() as session:
+        query = select(Events).where(Events.user_tg_id == tg_id)
+
+        if kudago_id is not None:
+            query = query.where(Events.kudago_id == kudago_id)
+
+        result = await session.scalars(query)
+        return result.all()
+
+
+async def delete_event(tg_id: int, kudago_id: int) -> None:
     async with async_sessions() as session:
         await session.execute(
-            delete(VisitedEvents).where(
-                and_(
-                    VisitedEvents.user_tg_id == user_tg_id,
-                    VisitedEvents.visit_id == visit_id,
-                )
+            delete(Events).where(
+                and_(Events.user_tg_id == tg_id, Events.kudago_id == kudago_id)
             )
         )
         await session.commit()

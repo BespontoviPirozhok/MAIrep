@@ -15,7 +15,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from database.requests import get_comments
 from roles.roles_main import admin_check
 from .search_menu import place_view_smart_reply, get_place_info_text
-from .main_menu import pretty_date, back_reply
+from .main_menu import back_reply
 
 router = Router()
 

@@ -64,7 +64,7 @@ async def return_to_user_menu(
         )
 
 
-async def pretty_date(date_str: str) -> str:
+def pretty_date(date_str: str) -> str:
     months_ru = [
         "января",
         "февраля",
@@ -86,37 +86,21 @@ async def pretty_date(date_str: str) -> str:
 
 @router.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    user_tg_id = message.from_user.id
-    await add_user(tg_id=user_tg_id, regist_date=datetime.datetime.now().date())
-    """Красивый ответ на /start"""
-    now = datetime.datetime.now()
-    hour = now.hour
-    time_str = now.strftime("%H:%M")  # Форматируем время как ЧЧ:ММ
+    greetings = "С возвращением"
+    tg_id = message.from_user.id
     first_name = message.from_user.first_name
-    emoji = "🌃"
-
-    # Определяем приветственную фразу
-    if 4 <= hour <= 11:
-        greeting = "Доброе утро"
-        emoji = "🌄"
-    elif 12 <= hour <= 16:
-        greeting = "Добрый день"
-        emoji = "⛅"
-    elif 17 <= hour <= 23:
-        greeting = "Добрый вечер"
-        emoji = "🌇"
-    else:
-        greeting = "Доброй ночи"
-
-    # Отправляем оформленное приветственное сообщение
-    await message.answer(
-        f"В Москве сейчас {time_str}\n{greeting}, {first_name}! {emoji}"
-    )
-
-    # Отправляем меню
+    if not await get_user(tg_id):
+        tg_username = message.from_user.username
+        greetings = "Добро пожаловать"
+        await add_user(
+            tg_id=tg_id,
+            tg_username=tg_username,
+            regist_date=datetime.datetime.now().date(),
+        )
+    """Красивый ответ на /start"""
     await return_to_user_menu(
-        user_tg_id,
-        """Добро пожаловать в бота Location Chooser, вот мои функции:
+        tg_id,
+        f"""{greetings} в бота Location Chooser, {first_name}! Вот мои функции:
 🔍 Поиск мест - поиск интересующих вас мест, их оценка и комментирование
 💬 Чат с ИИ - возможность по душам поболтать с искусственным интеллектом
 🪪 Профиль - информация о ваших посещенных местах, отзывах и комментариях
@@ -130,8 +114,13 @@ async def unknown_command(message: Message) -> None:
     """
     Ответ на неизвестное сообщение
     """
-    await return_to_user_menu(
-        message.from_user.id,
-        "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔",
-        message,
-    )
+    if not await get_user(message.from_user.id):
+        await message.answer(
+            "Вы еще не начали пользоваться ботом. Чтобы это исправить, напишите /start"
+        )
+    else:
+        await return_to_user_menu(
+            message.from_user.id,
+            "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔",
+            message,
+        )

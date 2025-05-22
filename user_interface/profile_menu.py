@@ -20,11 +20,11 @@ from .main_menu import return_to_user_menu, pretty_date, back_reply
 from database.requests import (
     get_user,
     get_comments,
-    get_events,
     get_place,
     get_full_comment_data_by_user,
+    get_events,
 )
-from roles.roles_main import admin_check, get_user_status_text, owner_check
+from roles.roles_main import get_user_status_text
 
 
 PAGINATOR_CONFIG = {
@@ -44,8 +44,8 @@ PAGINATOR_CONFIG = {
         "item_name": "посещенных мест",
     },
     "events": {
-        "batch_size": 5,
-        "format_func": lambda item: f"{item.title}\n{item.description}",
+        "batch_size": 4,
+        "format_func": lambda item: f"*{item.event_name}*\n{item.event_time}",
         "item_name": "мероприятий",
     },
 }
@@ -78,7 +78,7 @@ async def profile_keyboard(tg_id: int, message: Message, state: FSMContext):
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text=f"Дата регистрации: {await pretty_date(str(reg_date))}",
+                    text=f"Дата регистрации: {pretty_date(str(reg_date))}",
                     callback_data="reg_date",
                 )
             ],
