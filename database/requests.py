@@ -28,30 +28,14 @@ async def add_user(
             await session.commit()
 
 
-# async def change_status_user(tg_id: int, user_status: Optional[int] = 1) -> None:
-#     async with async_sessions() as session:
-#         user = await session.scalar(select(User).where(User.tg_id == tg_id))
-
-#         if user:
-#             user.user_status = user_status
-
-#         await session.commit()
-
-
-async def change_status_user(
-    tg_id: Optional[int] = None, tg_username: Optional[str] = None, user_status: int = 1
-) -> None:
+async def change_status_user(tg_id: int, user_status: Optional[int] = 1) -> None:
     async with async_sessions() as session:
-        if tg_id is not None:
-            query = select(User).where(User.tg_id == tg_id)
-        else:
-            query = select(User).where(User.tg_username == tg_username)
-
-        user = await session.scalar(query)
+        user = await session.scalar(select(User).where(User.tg_id == tg_id))
 
         if user:
             user.user_status = user_status
-            await session.commit()
+
+        await session.commit()
 
 
 async def get_user(

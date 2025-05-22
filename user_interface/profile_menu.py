@@ -65,7 +65,7 @@ async def profile_keyboard(tg_id: int, message: Message, state: FSMContext):
     user_info = await get_user(tg_id)
     reg_date = user_info.regist_date
     status_text = await get_user_status_text(tg_id)
-    all_comments = await get_full_comment_data_by_user(tg_id)
+    all_comments = (await get_full_comment_data_by_user(tg_id))[::-1]
     await state.update_data(all_comments=all_comments)
     ratings = [c for c in all_comments if c.commentator_rating != 0]
     await state.update_data(ratings=ratings)

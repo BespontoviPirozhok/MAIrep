@@ -32,15 +32,15 @@ async def custom_place_info(
 ) -> str:
     a = "*"
     return f"""Информация о месте после изменений будет выглядеть примерно так:
-*{place_name}*
+<b>{place_name}</b>
     
 Оценка: ?
 
-Категория: {place_category}
+Категория: <code>{place_category}</code>
             
 Адрес: ?
             
-Описание: {place_description}
+Описание: <code>{place_description}</code>
 
 Сводка комментариев: ?
 
@@ -55,12 +55,12 @@ async def get_smart_desc_edit_menu(
 ) -> None:
     # Определяем текст сообщения и кнопки
     if not place_description:
-        main_text = f"📭 У места *{place_name}* нет описания. Чтобы его добавить, просто введите текст ниже"
+        main_text = f"📭 У места <b>{place_name}</b> нет описания. Чтобы его добавить, просто введите текст ниже"
         button_text = "Оставить место без описания"
     else:
         main_text = (
-            f"📄 Текущее описание *{place_name}* (для копирования нажмите на него):\n"
-            f"\n`{place_description}`\n\n"
+            f"📄 Текущее описание <b>{place_name}</b> (для копирования нажмите на него):\n\n"
+            f"<code>{place_description}</code>\n\n"
             "Введите новый текст описания или отредактируйте текущий:"
         )
         button_text = "Оставить прежнее описание"
@@ -77,13 +77,11 @@ async def get_smart_desc_edit_menu(
 
     if isinstance(obj, CallbackQuery):
         # Для CallbackQuery: редактируем текущее сообщение
-        await obj.message.edit_text(
-            main_text, reply_markup=keyboard, parse_mode="MARKDOWN"
-        )
+        await obj.message.edit_text(main_text, reply_markup=keyboard, parse_mode="HTML")
         await obj.answer()  # Убираем индикатор загрузки
     elif isinstance(obj, Message):
         # Для Message: отправляем новое сообщение
-        await obj.answer(main_text, reply_markup=keyboard, parse_mode="MARKDOWN")
+        await obj.answer(main_text, reply_markup=keyboard, parse_mode="HTML")
 
 
 async def get_smart_category_edit_menu(
@@ -93,12 +91,12 @@ async def get_smart_category_edit_menu(
 ):
     # Определяем текст сообщения и кнопки
     if not place_category:
-        main_text = f"📭 У места *{place_name}* нет категории. Чтобы добавить ее, просто введите текст ниже"
+        main_text = f"📭 У места <b>{place_name}</b> нет категории. Чтобы добавить ее, просто введите текст ниже"
         button_text = "Оставить место без категории"
     else:
         main_text = (
-            f"📄 Текущая категория места *{place_name}* (для копирования нажмите на него):\n"
-            f"\n`{place_category}`\n\n"
+            f"📄 Текущая категория места <b>{place_name}</b> (для копирования нажмите на него):\n\n"
+            f"<code>{place_category}</code>\n\n"
             "Введите новую категорию или отредактируйте текущую:"
         )
         button_text = "Оставить прежнюю категорию"
@@ -118,7 +116,7 @@ async def get_smart_category_edit_menu(
     await message.answer(
         main_text,
         reply_markup=keyboard,
-        parse_mode="MARKDOWN",
+        parse_mode="HTML",
     )
 
 
@@ -202,7 +200,7 @@ async def skip_category(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         text=await custom_place_info(place_name, place_category, place_description),
         reply_markup=feedback_confirm_reply,
-        parse_mode="MARKDOWN",
+        parse_mode="HTML",
     )
     await callback.answer()
 
@@ -218,7 +216,7 @@ async def edit_category(message: Message, state: FSMContext):
     await message.answer(
         text=await custom_place_info(place_name, place_category, new_description),
         reply_markup=feedback_confirm_reply,
-        parse_mode="MARKDOWN",
+        parse_mode="HTML",
     )
 
 

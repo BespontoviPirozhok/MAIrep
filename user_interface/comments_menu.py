@@ -48,8 +48,7 @@ async def show_comments(message: Message, state: FSMContext):
     await state.set_state(Step.сomments_list)
 
     # Получаем и сортируем комментарии
-    raw_comments = await get_comments(place_id=place_id, filter_empty_text=True)
-    all_comments = raw_comments
+    all_comments = (await get_comments(place_id=place_id, filter_empty_text=True))[::-1]
 
     if not all_comments:
         await message.answer(

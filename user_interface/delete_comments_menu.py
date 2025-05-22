@@ -52,7 +52,7 @@ async def show_all_comments(message: Message, state: FSMContext):
 
 async def display_comments_batch(message: Message, state: FSMContext):
     data = await state.get_data()
-    all_comments = data.get("all_comments", [])
+    all_comments = data.get("all_comments", [])[::-1]
     page = data.get("current_page", 0)
 
     # Корректируем номер страницы если он превышает максимум
