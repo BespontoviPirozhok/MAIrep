@@ -160,8 +160,8 @@ async def exit(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "reg_date")
 async def show_reg_date(callback: CallbackQuery, state: FSMContext):
-    data = state.get_data()
-    reg_date = data.get("reg_date")
+    data = await state.get_data()
+    reg_date = str(data.get("reg_date"))
     await callback.answer(compare_times(reg_date), show_alert=True)
 
 
