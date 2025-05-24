@@ -25,6 +25,7 @@ from roles.roles_main import (
     owner_check,
 )
 
+from user_interface.aka_backend import admin_menu, admin_extended_reply
 from database.requests import (
     get_user,
     change_status_user,
@@ -41,20 +42,6 @@ class Step(StatesGroup):
     ban_unban = State()
 
 
-admin_extended_reply = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="Изменить роль пользователя"),
-            KeyboardButton(text="Удаление комментариев"),
-        ],
-        [
-            KeyboardButton(text="👤 Профиль"),
-            KeyboardButton(text="Назад в обычное меню"),
-        ],
-    ],
-    is_persistent=True,
-    input_field_placeholder="Выберите пункт",
-)
 delete_all_user_comments_reply = ReplyKeyboardMarkup(
     keyboard=[
         [
@@ -122,19 +109,8 @@ async def handle_role_assignment(message: Message, user_tg_id: int):
 
 
 @router.message(F.text == "Ⓜ️ Админ-меню")
-async def exit(message: Message, state: FSMContext):
-    user_id = message.from_user.id
-    if not await admin_check(user_id):
-        user_role = await get_user_status_text(user_id)
-        await return_to_user_menu(
-            user_id, f"Вы - {user_role}, вам не доступно админ-меню!", message
-        )
-    else:
-        await state.set_state(Step.admin_menu)
-        await message.answer(
-            "Добро пожаловать в Админ-меню! Скоро здесь будет описание как всем этим пользоваться",
-            reply_markup=admin_extended_reply,
-        )
+async def start_admin_menu(message: Message, state: FSMContext):
+    await admin_menu(message, state)
 
 
 @router.message(Step.admin_menu, F.text == "Назад в обычное меню")

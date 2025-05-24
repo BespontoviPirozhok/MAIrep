@@ -14,10 +14,11 @@ from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from user_interface.main_menu import return_to_user_menu, back_reply
+from user_interface.aka_backend import event_searching, cities_kb_def
 
 
 from database.requests import add_event, get_events, delete_event
-from map_and_events.kudago import search_kudago, full_event_data, cities_kudago
+from map_and_events.kudago import search_kudago, full_event_data
 
 router = Router()
 
@@ -92,41 +93,10 @@ async def get_event_info_text(event_short_data: int) -> str:
 Описание: {full_data.description}"""
 
 
-async def cities_kb_def(state):
-    data = await state.get_data()
-    city_eng = data.get("city_eng", "msk")
-    city_dict = await cities_kudago()
-    cities_keyboard = []
-    for city_rus_dict, city_eng_dict in city_dict.items():
-        if city_eng == city_eng_dict:
-            continue
-        cities_keyboard.append(
-            [
-                InlineKeyboardButton(
-                    text=city_rus_dict,
-                    callback_data=f"city_{city_rus_dict}_{city_eng_dict}",
-                )
-            ]
-        )
-    return InlineKeyboardMarkup(inline_keyboard=cities_keyboard)
-
-
 @router.message(F.text == "🏝️ Поиск мероприятий")
-async def event_searching(message: Message, state: FSMContext):
-    data = await state.get_data()
-    city_rus = data.get("city_rus", "Москва")
-
-    await state.set_state(Step.event_search)
-    await message.answer(
-        f"Выберите город, в котором хотите искать мероприятия. Выбранный город - *{city_rus}*",
-        reply_markup=await cities_kb_def(state),
-        parse_mode="Markdown",
-    )
-    await message.answer(
-        f"🔎 *Введите название мероприятия, которое хотите найти.\nЕсли ваше сообщение исчезло, значит по вашему запросу ничего не нашлось.*",
-        reply_markup=back_reply,
-        parse_mode="Markdown",
-    )
+@router.message(Step.event_search, F.text == "Выбрать другой город")
+async def start_event_searching(message: Message, state: FSMContext):
+    await event_searching(message, state)
 
 
 @router.callback_query(Step.event_search, F.data.startswith("city_"))
@@ -145,23 +115,6 @@ async def handle_event_selection(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f"Выберите город, в котором хотите искать мероприятия. Выбранный город - *{city_rus}*",
         reply_markup=await cities_kb_def(state),
-        parse_mode="Markdown",
-    )
-
-
-@router.message(Step.event_search, F.text == "Выбрать другой город")
-async def event_searching(message: Message, state: FSMContext):
-    data = await state.get_data()
-    city_rus = data.get("city_rus", "Москва")
-
-    await state.set_state(Step.event_search)
-    await message.answer(
-        f"Выбранный город: {city_rus}",
-        reply_markup=await cities_kb_def(state),
-    )
-    await message.answer(
-        f"🔎 *Введите название мероприятия, которое хотите найти.\nЕсли ваше сообщение исчезло, значит по вашему запросу ничего не нашлось.*",
-        reply_markup=back_reply,
         parse_mode="Markdown",
     )
 

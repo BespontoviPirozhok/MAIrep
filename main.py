@@ -9,6 +9,7 @@ from loaded_dotenv import TOKEN
 
 # КЛАВИАТУРЫ
 from user_interface.main_menu import router as main_menu_rt
+from user_interface.aka_backend import router as aka_back_rt
 from user_interface.admin_menu import router as admin_menu_rt
 from user_interface.delete_comments_menu import router as delete_comments_rt
 from user_interface.edit_place_menu import router as edit_place_menu_rt
@@ -18,13 +19,14 @@ from user_interface.ai_menu import router as ai_menu_rt
 from user_interface.feedback_menu import router as feedback_menu_rt
 from user_interface.comments_menu import router as comments_menu_rt
 from user_interface.profile_menu import router as profile_menu_rt
-from user_interface.main_menu import error_rt
+from ai_services.unformal_handler import smart_error_rt
 
 # РОУТЕРЫ
 bot = Bot(TOKEN)
 dp = Dispatcher()
 DispatcherHandler.set_data(bot, dp)
 dp.include_router(main_menu_rt)
+dp.include_router(aka_back_rt)
 dp.include_router(edit_place_menu_rt)
 dp.include_router(admin_menu_rt)
 dp.include_router(delete_comments_rt)
@@ -34,7 +36,7 @@ dp.include_router(ai_menu_rt)
 dp.include_router(comments_menu_rt)
 dp.include_router(feedback_menu_rt)
 dp.include_router(profile_menu_rt)
-dp.include_router(error_rt)
+dp.include_router(smart_error_rt)
 
 # КОНФИГУРАЦИЯ ЛОГГЕРА
 logging.basicConfig(

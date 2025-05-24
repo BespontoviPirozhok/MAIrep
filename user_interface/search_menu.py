@@ -14,6 +14,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from user_interface.main_menu import return_to_user_menu, back_reply
 
+from user_interface.aka_backend import search_places
+
 from roles.roles_main import user_check, manager_check
 
 from database.requests import get_place, add_place, get_comments
@@ -24,7 +26,7 @@ router = Router()
 
 
 class Step(StatesGroup):  # состояния
-    search_input = State()  # поисковая строка и показ мест
+    place_search = State()  # поисковая строка и показ мест
     place_view = State()  # просмотр информации о месте
 
 
@@ -129,36 +131,22 @@ async def get_place_info_text(place_id: int) -> str:
             
 Описание: {temp_place.description}
 
-Сводка комментариев: АЛЕ ИЛЮША ГДЕ НЕЙРОНКА?{temp_place.avg_comment}
+Сводка комментариев: {temp_place.avg_comment}
 """
 
 
 @router.message(F.text == "🔍 Поиск мест")
-async def search_places(message: Message, state: FSMContext):
-    await state.set_state(Step.search_input)
-    await message.answer(
-        """
-Рядом названием каждого места есть специальный значок:
-✅ - Вы уже посетили данное место;
-🌎 - Место есть в базе данных, возможно у него уже есть оценки и комментарии;
-🌐 - Места еще нет в базе данных, но вы можете его туда добавить.
-Если ваше сообщение исчезло, значит по вашему запросу ничего не нашлось.
-""",
-    )
-    await message.answer(
-        """Введите название места, которое хотите найти
-""",
-        reply_markup=back_reply,
-    )
+async def start_search_places(message: Message, state: FSMContext):
+    await search_places(message, state)
 
 
-@router.message(Step.search_input, F.text == "Назад")
+@router.message(Step.place_search, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
     await return_to_user_menu(message.from_user.id, "Вы вернулись в меню", message)
 
 
-@router.message(Step.search_input)
+@router.message(Step.place_search)
 async def inline_places(message: Message, state: FSMContext):
     search_places_list = await map_search(message.text)
     await state.update_data(places_list=search_places_list)
@@ -208,7 +196,7 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
 
 @router.message(Step.place_view, F.text == "Назад")
 async def back_to_places_list(message: Message, state: FSMContext):
-    await state.set_state(Step.search_input)
+    await state.set_state(Step.place_search)
     data = await state.get_data()
     places_list = data.get("places_list")
     await places_search_view(places_list, message, state)

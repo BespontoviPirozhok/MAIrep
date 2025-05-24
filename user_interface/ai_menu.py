@@ -5,13 +5,15 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 
 from .main_menu import return_to_user_menu
+from ai_services.yandex_gpt import chat, recom, you_mean
+from database.requests import get_full_comment_data_by_user, get_user
+from user_interface.aka_backend import ai_chat
 
 router = Router()
 
 
 class Step(StatesGroup):
     ai_chat = State()
-    ai_advice = State()
 
 
 ai_chat_keyboard = ReplyKeyboardMarkup(
@@ -24,26 +26,10 @@ ai_chat_keyboard = ReplyKeyboardMarkup(
     is_persistent=True,
 )
 
-ai_advice_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Другая рекомендация")],
-        [KeyboardButton(text="Назад")],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Выберите пункт",
-)
-
 
 @router.message(F.text == "🤖 Чат с ИИ")
-async def help(message: Message, state: FSMContext):
-    await state.set_state(Step.ai_chat)
-    await message.answer(
-        """Добро пожаловать в чат с ИИ, вот что он умеет:
-- Вы можете поболтать с нашим ИИ ассистентом на любые темы, просто набрав сообщение сюда ⬇️
-- С опцией "Маршрут построен 😎" ассистент порекомендует вам новые интересные места на основании 5-ти последних посещенных"
-        """,
-        reply_markup=ai_chat_keyboard,
-    )
+async def start_ai_chat(message: Message, state: FSMContext):
+    await ai_chat(message, state)
 
 
 @router.message(Step.ai_chat, F.text == "Назад")
@@ -54,35 +40,46 @@ async def exit(message: Message, state: FSMContext):
 
 @router.message(Step.ai_chat, F.text == "Маршрут построен 😎")
 async def ai_advice_request(message: Message, state: FSMContext):
-    await state.set_state(Step.ai_advice)
-    await message.answer(
-        "Здесь должны быть рекомендации",
-        reply_markup=ai_advice_keyboard,
-    )
-
-
-@router.message(Step.ai_advice, F.text == "Назад")
-async def ai_advice_back(message: Message, state: FSMContext):
-    await state.set_state(Step.ai_chat)
-    await message.answer(
-        "Хотите поболтать? Просто напишите сообщение и ассистент на него ответит",
-        reply_markup=ai_chat_keyboard,
-    )
-
-
-@router.message(Step.ai_advice, F.text == "Другая рекомендация")
-async def ai_advice_back(message: Message, state: FSMContext):
-    await message.answer(
-        "Тут должная быть другая рекомендация",
-        reply_markup=ai_advice_keyboard,
-    )
+    tg_id = message.from_user.id
+    data = await state.get_data()
+    last_visited_places = data.get("recomm_chat", [])
+    if not last_visited_places:
+        raw_last_visited_places = await get_full_comment_data_by_user(tg_id)
+        count_places = len(raw_last_visited_places)
+        if count_places < 5:
+            await message.answer(
+                f"Недостаточно мест для составления рекомендации, нужно посетить еще {5 - count_places}.",
+                reply_markup=ai_chat_keyboard,
+            )
+            return
+        last_visited_places = [
+            f"{c.name}, {c.address}" for c in raw_last_visited_places
+        ]
+    ai_recommendation = await recom(last_visited_places)
+    recomm_chat = [
+        f"Пользователь: {"\n\n".join(last_visited_places)}",
+        f"Ассистент: {ai_recommendation}",
+    ]
+    print(len(last_visited_places), len(recomm_chat))
+    await state.update_data(request_list=recomm_chat, recomm_chat=recomm_chat)
+    await message.answer(ai_recommendation, reply_markup=ai_chat_keyboard)
 
 
 @router.message(Step.ai_chat)
 async def sending_message_to_ai(message: Message, state: FSMContext):
-    request_to_ai = message.text
-    print(request_to_ai)
-    await message.answer_sticker(
-        r"CAACAgIAAxkBAAEOZD9oEnDFvWYOx4FG4HSPqijWCx8iPwACqGAAAn_xWUq5KNvV3mYaEDYE",
-        reply_markup=ai_chat_keyboard,
-    )
+    latest_request_to_ai = message.text
+    data = await state.get_data()
+    request_list = data.get("request_list", [])
+    request_list.append(f"Пользователь: {latest_request_to_ai}")
+    ai_answer = await chat(request_list)
+    if (
+        ai_answer
+        == "В интернете есть много сайтов с информацией на эту тему. [Посмотрите, что нашлось в поиске](https://ya.ru)"
+    ):
+        ai_answer = "Недопустимый запрос"
+    request_list.append(f"Ассистент: {ai_answer}")
+    if len(request_list) >= 10:
+        del request_list[0:2]
+    await state.update_data(request_list=request_list)
+
+    await message.answer(ai_answer, reply_markup=ai_chat_keyboard)

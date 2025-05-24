@@ -213,29 +213,6 @@ async def delete_comment(commentator_tg_id: int, place_id: int) -> None:
         await session.commit()
 
 
-async def print_comments_details(
-    place_id: Optional[int] = None, commentator_tg_id: Optional[int] = None
-) -> None:
-    comments = await get_comments(place_id, commentator_tg_id)
-
-    if not comments:
-        print("No comments found")
-        return
-
-    for idx, comment in enumerate(comments, 1):
-        print(f"\n=== Comment {idx} ===")
-
-        # Выводим все атрибуты модели через рефлексию
-        for attr_name in dir(comment):
-            if not attr_name.startswith("_") and not callable(
-                getattr(comment, attr_name)
-            ):
-                attr_value = getattr(comment, attr_name)
-                print(f"{attr_name}:")
-                print(f"  Value: {repr(attr_value)}")
-                print(f"  Type:  {type(attr_value).__name__}")
-
-
 async def delete_all_user_non_empty_comments(commentator_tg_id: int) -> None:
     async with async_sessions() as session:
         await session.execute(

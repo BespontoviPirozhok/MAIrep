@@ -13,8 +13,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from datetime import date
 from roles.roles_main import user_check
-from database.requests import add_comment, get_comments, delete_comment
+from database.requests import add_comment, get_comments, delete_comment, update_place
 from .search_menu import place_view_smart_reply, get_place_info_text
+from ai_services.yandex_gpt import av_comment
 
 
 router = Router()
@@ -252,6 +253,11 @@ async def confirm_feedback(message: Message, state: FSMContext):
         text=comment_text,
         rating=user_rating,
     )
+    all_comments = await get_comments(place_id)
+    if len(all_comments) % 5 == 0:
+        only_text_comments = [s.comment_text.replace("⭐", "") for s in all_comments]
+        avg_comm = await av_comment(only_text_comments)
+        await update_place(place_id=place_id, new_avg_comment=avg_comm)
     await message.answer("Отзыв успешно сохранен! ✅")
     place_info = await get_place_info_text(place_id)
     await message.answer(

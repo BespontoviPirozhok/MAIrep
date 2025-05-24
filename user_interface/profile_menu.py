@@ -25,6 +25,7 @@ from database.requests import (
     get_events,
 )
 from roles.roles_main import get_user_status_text
+from user_interface.aka_backend import profile_keyboard, profile
 
 
 PAGINATOR_CONFIG = {
@@ -59,55 +60,6 @@ class Step(StatesGroup):
     comment_show = State()
     visits_show = State()
     events_show = State()
-
-
-async def profile_keyboard(tg_id: int, message: Message, state: FSMContext):
-    user_info = await get_user(tg_id)
-    reg_date = user_info.regist_date
-    status_text = await get_user_status_text(tg_id)
-    all_comments = (await get_full_comment_data_by_user(tg_id))[::-1]
-    await state.update_data(all_comments=all_comments)
-    ratings = [c for c in all_comments if c.commentator_rating != 0]
-    await state.update_data(ratings=ratings)
-    comments = [c for c in all_comments if c.comment_text != ""]
-    await state.update_data(comments=comments)
-    events = await get_events(tg_id)
-    await state.update_data(events=events)
-
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=f"Дата регистрации: {pretty_date(str(reg_date))}",
-                    callback_data="reg_date",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=f"Посещённые места: {len(all_comments)}",
-                    callback_data="visits",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=f"Оценки: {len(ratings)}", callback_data="ratings"
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=f"Комментарии: {len(comments)}",
-                    callback_data="comments",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text=f"Мероприятия: {len(events)}", callback_data="events"
-                )
-            ],
-            [InlineKeyboardButton(text="Назад", callback_data="back_to_menu")],
-        ]
-    )
-    await message.answer(f"Ваша роль: {status_text}", reply_markup=keyboard)
 
 
 def compare_times(date_str: str) -> str:
@@ -201,13 +153,8 @@ async def load_more_items(message: Message, state: FSMContext):
 
 
 @router.message(F.text == "👤 Профиль")
-async def profile(message: Message, state: FSMContext):
-    await state.set_state(Step.profile_menu)
-    await message.answer(
-        "Загрузка вашего профиля 🌐", reply_markup=ReplyKeyboardRemove()
-    )
-    user_id = message.from_user.id
-    await profile_keyboard(user_id, message, state)
+async def start_profile(message: Message, state: FSMContext):
+    await profile(message, state)
 
 
 @router.callback_query(F.data == "back_to_menu")
@@ -294,10 +241,9 @@ async def show_events(callback: CallbackQuery, state: FSMContext):
     ),
     F.text == "Назад",
 )
-async def profile(message: Message, state: FSMContext):
+async def back_to_profile(message: Message, state: FSMContext):
     await state.set_state(Step.profile_menu)
     await message.answer(
         "Возвращаемся к меню профиля 🌐", reply_markup=ReplyKeyboardRemove()
     )
-    user_id = message.from_user.id
-    await profile_keyboard(user_id, message, state)
+    await profile_keyboard(message, state)

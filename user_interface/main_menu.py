@@ -6,9 +6,9 @@ import datetime
 
 from database.requests import get_user, add_user
 from roles.roles_main import admin_check
+from ai_services.yandex_gpt import you_mean
 
 router = Router()
-error_rt = Router()
 
 main_menu_reply = ReplyKeyboardMarkup(
     keyboard=[
@@ -107,20 +107,3 @@ async def command_start_handler(message: Message) -> None:
 🏝️ Поиск мероприятий - поиск мероприятий и отметка о их посещении""",
         message,
     )
-
-
-@error_rt.message()
-async def unknown_command(message: Message) -> None:
-    """
-    Ответ на неизвестное сообщение
-    """
-    if not await get_user(message.from_user.id):
-        await message.answer(
-            "Вы еще не начали пользоваться ботом. Чтобы это исправить, напишите /start"
-        )
-    else:
-        await return_to_user_menu(
-            message.from_user.id,
-            "Увы, мне не понятны ваши слова, ибо я понимаю только команды 😔",
-            message,
-        )
