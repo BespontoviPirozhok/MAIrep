@@ -12,8 +12,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from database.requests import get_comments, delete_comment
 from roles.roles_main import admin_check, get_user_status_text
-from .main_menu import return_to_user_menu
 from .admin_menu import admin_extended_reply
+from .ui_main import return_to_user_menu
 
 router = Router()
 
@@ -40,7 +40,7 @@ async def show_all_comments(message: Message, state: FSMContext):
     tg_id = message.from_user.id
     if not await admin_check(tg_id):
         await return_to_user_menu(
-            tg_id, "У вас нет права удалять комменатрии!", message
+            "У вас нет права удалять комменатрии!", message, tg_id
         )
         return
 
@@ -68,7 +68,7 @@ async def display_comments_batch(message: Message, state: FSMContext):
 
     # Если комментариев нет вообще
     if not batch and page == 0:
-        await message.answer("Комментариев нет")
+        await message.answer("Комментариев нет", reply_markup=admin_extended_reply)
         await state.set_state(Step.admin_menu)
         return
     elif not batch:  # Если страница пуста, но есть предыдущие
@@ -100,9 +100,7 @@ async def display_comments_batch(message: Message, state: FSMContext):
     if len(all_comments) > end_idx:
         control_buttons.append([KeyboardButton(text="Показать ещё")])
 
-    control_buttons.append(
-        [KeyboardButton(text="Назад", callback_data="exit_comments")]
-    )
+    control_buttons.append([KeyboardButton(text="Назад")])
 
     # Текст с прогрессом
     shown_comments = min(end_idx, total_comments)

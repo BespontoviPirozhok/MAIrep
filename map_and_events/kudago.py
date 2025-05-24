@@ -1,7 +1,6 @@
 import aiohttp
 import asyncio
 import datetime
-from user_interface.main_menu import pretty_date
 
 
 class Place_short:
@@ -36,6 +35,26 @@ class Place_full:
         self.description = description
         self.place_id = place_id
         self.event_address = event_address
+
+
+def pretty_date(date_str: str) -> str:
+    months_ru = [
+        "января",
+        "февраля",
+        "марта",
+        "апреля",
+        "мая",
+        "июня",
+        "июля",
+        "августа",
+        "сентября",
+        "октября",
+        "ноября",
+        "декабря",
+    ]
+    year, month, day = map(int, date_str.split("-"))
+
+    return f"{day} {months_ru[month-1]} {year} г."
 
 
 def parse_datetime(dataTime):

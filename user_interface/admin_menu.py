@@ -12,12 +12,6 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from user_interface.main_menu import (
-    admin_menu_reply,
-    return_to_user_menu,
-    back_reply,
-    main_menu_reply,
-)
 from roles.dispatcher_handler import DispatcherHandler
 from roles.roles_main import (
     admin_check,
@@ -25,7 +19,12 @@ from roles.roles_main import (
     owner_check,
 )
 
-from user_interface.aka_backend import admin_menu, admin_extended_reply
+from user_interface.ui_main import (
+    admin_menu,
+    admin_extended_reply,
+    return_to_user_menu,
+    back_reply,
+)
 from database.requests import (
     get_user,
     change_status_user,
@@ -116,9 +115,7 @@ async def start_admin_menu(message: Message, state: FSMContext):
 @router.message(Step.admin_menu, F.text == "Назад в обычное меню")
 async def back_to_main_menu(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu(
-        message.from_user.id, "Вы вернулись в обычное меню", message
-    )
+    await return_to_user_menu("Вы вернулись в обычное меню", message)
 
 
 @router.message(Step.admin_menu, F.text == "Изменить роль пользователя")

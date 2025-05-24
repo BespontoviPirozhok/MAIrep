@@ -9,7 +9,7 @@ from loaded_dotenv import TOKEN
 
 # КЛАВИАТУРЫ
 from user_interface.main_menu import router as main_menu_rt
-from user_interface.aka_backend import router as aka_back_rt
+from user_interface.ui_main import router as aka_back_rt
 from user_interface.admin_menu import router as admin_menu_rt
 from user_interface.delete_comments_menu import router as delete_comments_rt
 from user_interface.edit_place_menu import router as edit_place_menu_rt

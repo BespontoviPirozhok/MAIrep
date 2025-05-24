@@ -12,9 +12,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from user_interface.main_menu import return_to_user_menu, back_reply
-
-from user_interface.aka_backend import search_places
+from user_interface.ui_main import search_places, return_to_user_menu, back_reply
 
 from roles.roles_main import user_check, manager_check
 
@@ -143,7 +141,7 @@ async def start_search_places(message: Message, state: FSMContext):
 @router.message(Step.place_search, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu(message.from_user.id, "Вы вернулись в меню", message)
+    await return_to_user_menu("Вы вернулись в меню", message)
 
 
 @router.message(Step.place_search)
@@ -173,6 +171,8 @@ async def handle_place_selection(callback: CallbackQuery, state: FSMContext):
             name=current_place.name,
             category=current_place.category,
             address=current_place.address,
+            description="Отсутствует",
+            avg_comment="Недостаточно комментариев для сводки",
         )
         place_in_db = await get_place(
             name=current_place.name, address=current_place.address

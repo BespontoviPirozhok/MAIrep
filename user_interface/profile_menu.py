@@ -2,10 +2,8 @@ from aiogram.types import (
     Message,
     KeyboardButton,
     ReplyKeyboardMarkup,
-    InlineKeyboardButton,
     CallbackQuery,
     ReplyKeyboardRemove,
-    InlineKeyboardMarkup,
 )
 from aiogram import Router
 from aiogram.filters import StateFilter
@@ -14,18 +12,13 @@ from aiogram.fsm.context import FSMContext
 from aiogram import F
 from datetime import date
 from typing import List
-from dataclasses import dataclass
 from typing import Callable, Any, List
-from .main_menu import return_to_user_menu, pretty_date, back_reply
-from database.requests import (
-    get_user,
-    get_comments,
-    get_place,
-    get_full_comment_data_by_user,
-    get_events,
+from user_interface.ui_main import (
+    profile_keyboard,
+    profile,
+    return_to_user_menu,
+    back_reply,
 )
-from roles.roles_main import get_user_status_text
-from user_interface.aka_backend import profile_keyboard, profile
 
 
 PAGINATOR_CONFIG = {
@@ -160,16 +153,15 @@ async def start_profile(message: Message, state: FSMContext):
 @router.callback_query(F.data == "back_to_menu")
 async def exit(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
+    tg_id = callback.from_user.id
+    await return_to_user_menu("Операция отменена", callback.message, tg_id)
     await state.clear()
-    await return_to_user_menu(
-        callback.from_user.id, "Операция отменена", callback.message
-    )
 
 
 @router.callback_query(F.data == "reg_date")
-async def show_reg_date(callback: CallbackQuery):
-    user_info = await get_user(callback.from_user.id)
-    reg_date = str(user_info.regist_date)
+async def show_reg_date(callback: CallbackQuery, state: FSMContext):
+    data = state.get_data()
+    reg_date = data.get("reg_date")
     await callback.answer(compare_times(reg_date), show_alert=True)
 
 

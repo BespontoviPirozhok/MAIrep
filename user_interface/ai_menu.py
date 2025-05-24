@@ -5,9 +5,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 
 from .main_menu import return_to_user_menu
-from ai_services.yandex_gpt import chat, recom, you_mean
+from ai_services.yandex_gpt import chat, recom, describe_places
 from database.requests import get_full_comment_data_by_user, get_user
-from user_interface.aka_backend import ai_chat
+from user_interface.ui_main import ai_chat
 
 router = Router()
 
@@ -35,15 +35,15 @@ async def start_ai_chat(message: Message, state: FSMContext):
 @router.message(Step.ai_chat, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu(message.from_user.id, "Операция отменена", message)
+    await return_to_user_menu("Операция отменена", message)
 
 
 @router.message(Step.ai_chat, F.text == "Маршрут построен 😎")
 async def ai_advice_request(message: Message, state: FSMContext):
     tg_id = message.from_user.id
     data = await state.get_data()
-    last_visited_places = data.get("recomm_chat", [])
-    if not last_visited_places:
+    places_history = data.get("recomm_chat", [])
+    if not places_history:
         raw_last_visited_places = await get_full_comment_data_by_user(tg_id)
         count_places = len(raw_last_visited_places)
         if count_places < 5:
@@ -52,17 +52,16 @@ async def ai_advice_request(message: Message, state: FSMContext):
                 reply_markup=ai_chat_keyboard,
             )
             return
-        last_visited_places = [
-            f"{c.name}, {c.address}" for c in raw_last_visited_places
-        ]
-    ai_recommendation = await recom(last_visited_places)
-    recomm_chat = [
-        f"Пользователь: {"\n\n".join(last_visited_places)}",
-        f"Ассистент: {ai_recommendation}",
-    ]
-    print(len(last_visited_places), len(recomm_chat))
-    await state.update_data(request_list=recomm_chat, recomm_chat=recomm_chat)
-    await message.answer(ai_recommendation, reply_markup=ai_chat_keyboard)
+        places_history = [*[f"{c.name}, {c.address}" for c in raw_last_visited_places]]
+    ai_raw_places = await recom(places_history)
+    described_places = await describe_places(ai_raw_places)
+    if len(places_history) > 2:
+        del places_history[0]
+    places_history.append(ai_raw_places)
+    await state.update_data(request_list=places_history, recomm_chat=places_history)
+    await message.answer(
+        described_places, reply_markup=ai_chat_keyboard, parse_mode="Markdown"
+    )
 
 
 @router.message(Step.ai_chat)

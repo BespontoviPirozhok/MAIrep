@@ -1,87 +1,14 @@
-from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
+from aiogram.types import Message
 from aiogram import Router
 from aiogram.filters import CommandStart
 
 import datetime
 
 from database.requests import get_user, add_user
-from roles.roles_main import admin_check
-from ai_services.yandex_gpt import you_mean
+
+from user_interface.ui_main import return_to_user_menu
 
 router = Router()
-
-main_menu_reply = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="🔍 Поиск мест"),
-            KeyboardButton(text="🏝️ Поиск мероприятий"),
-        ],
-        [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🤖 Чат с ИИ")],
-    ],
-    is_persistent=True,
-    input_field_placeholder="Выберите пункт",
-)
-
-admin_menu_reply = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="🔍 Поиск мест"),
-            KeyboardButton(text="🏝️ Поиск мероприятий"),
-        ],
-        [
-            KeyboardButton(text="Ⓜ️ Админ-меню"),
-            KeyboardButton(text="🤖 Чат с ИИ"),
-        ],
-    ],
-    is_persistent=True,
-    input_field_placeholder="Выберите пункт",
-)
-
-
-back_reply = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="Назад")],
-    ],
-    resize_keyboard=True,
-    is_persistent=True,
-)
-
-
-async def return_to_user_menu(
-    tg_id: int,
-    msg_txt: str,
-    message: Message,
-) -> None:
-    if await admin_check(tg_id):
-        await message.answer(
-            msg_txt,
-            reply_markup=admin_menu_reply,
-        )
-    else:
-        await message.answer(
-            msg_txt,
-            reply_markup=main_menu_reply,
-        )
-
-
-def pretty_date(date_str: str) -> str:
-    months_ru = [
-        "января",
-        "февраля",
-        "марта",
-        "апреля",
-        "мая",
-        "июня",
-        "июля",
-        "августа",
-        "сентября",
-        "октября",
-        "ноября",
-        "декабря",
-    ]
-    year, month, day = map(int, date_str.split("-"))
-
-    return f"{day} {months_ru[month-1]} {year} г."
 
 
 @router.message(CommandStart())
@@ -99,7 +26,6 @@ async def command_start_handler(message: Message) -> None:
         )
     """Красивый ответ на /start"""
     await return_to_user_menu(
-        tg_id,
         f"""{greetings} в бота Location Chooser, {first_name}! Вот мои функции:
 🔍 Поиск мест - поиск интересующих вас мест, их оценка и комментирование
 💬 Чат с ИИ - возможность по душам поболтать с искусственным интеллектом

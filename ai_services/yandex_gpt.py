@@ -65,7 +65,6 @@ async def chat(
     """Общий чат с GPT для списка сообщений"""
     # Форматируем сообщения с нумерацией
     formatted_message = "\n\n".join(msg for i, msg in enumerate(messages_list))
-    print(formatted_message)
 
     # Создаем структуру сообщений для API
     messages = [{"role": "user", "text": formatted_message}]
@@ -108,7 +107,6 @@ async def av_comment(
     return None
 
 
-# Новые функции
 async def recom(visited_places: List[str]) -> Optional[str]:
     """Рекомендации новых мест на основе посещенных"""
 
@@ -123,6 +121,23 @@ async def recom(visited_places: List[str]) -> Optional[str]:
     ]
 
     response = await send_gpt_request(messages, 0.5)
+
+    try:
+        if response and "result" in response:
+            return response["result"]["alternatives"][0]["message"]["text"]
+    except (KeyError, IndexError) as e:
+        print(f"Ошибка разбора: {e}")
+
+    return None
+
+
+async def describe_places(places_list_txt: str) -> Optional[str]:
+    """Рекомендации новых мест на основе посещенных"""
+
+    describe_places_promt = load_prompt("describe_places_promt.json")
+    messages = [describe_places_promt, {"role": "user", "text": places_list_txt}]
+
+    response = await send_gpt_request(messages, 0.6)
 
     try:
         if response and "result" in response:

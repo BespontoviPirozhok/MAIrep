@@ -4,8 +4,6 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
     InlineKeyboardButton,
     CallbackQuery,
-    ReplyKeyboardRemove,
-    InlineKeyboardMarkup,
 )
 from aiogram import Router
 from aiogram.fsm.state import StatesGroup, State
@@ -13,8 +11,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from user_interface.main_menu import return_to_user_menu, back_reply
-from user_interface.aka_backend import event_searching, cities_kb_def
+from user_interface.ui_main import (
+    event_searching,
+    cities_kb_def,
+    return_to_user_menu,
+)
 
 
 from database.requests import add_event, get_events, delete_event
@@ -122,7 +123,7 @@ async def handle_event_selection(callback: CallbackQuery, state: FSMContext):
 @router.message(Step.event_search, F.text == "Назад")
 async def exit(message: Message, state: FSMContext):
     await state.clear()
-    await return_to_user_menu(message.from_user.id, "Операция отменена", message)
+    await return_to_user_menu("Операция отменена", message)
 
 
 @router.message(Step.event_search)

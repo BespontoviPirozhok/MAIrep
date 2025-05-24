@@ -13,11 +13,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram import Router, F
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from user_interface.main_menu import return_to_user_menu, back_reply, pretty_date
-
 from roles.roles_main import (
-    user_check,
-    manager_check,
     get_user_status_text,
     get_user,
     admin_check,
@@ -25,8 +21,7 @@ from roles.roles_main import (
 
 from database.requests import get_full_comment_data_by_user, get_user, get_events
 
-from map_and_events.map import map_search
-from map_and_events.kudago import cities_kudago
+from map_and_events.kudago import cities_kudago, pretty_date
 
 router = Router()
 
@@ -37,6 +32,60 @@ class Step(StatesGroup):  # состояния
     profile_menu = State()
     ai_chat = State()
     admin_menu = State()
+
+
+back_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="Назад")],
+    ],
+    resize_keyboard=True,
+    is_persistent=True,
+)
+
+
+main_menu_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text="🔍 Поиск мест"),
+            KeyboardButton(text="🏝️ Поиск мероприятий"),
+        ],
+        [KeyboardButton(text="👤 Профиль"), KeyboardButton(text="🤖 Чат с ИИ")],
+    ],
+    is_persistent=True,
+    input_field_placeholder="Выберите пункт",
+)
+
+admin_menu_reply = ReplyKeyboardMarkup(
+    keyboard=[
+        [
+            KeyboardButton(text="🔍 Поиск мест"),
+            KeyboardButton(text="🏝️ Поиск мероприятий"),
+        ],
+        [
+            KeyboardButton(text="Ⓜ️ Админ-меню"),
+            KeyboardButton(text="🤖 Чат с ИИ"),
+        ],
+    ],
+    is_persistent=True,
+    input_field_placeholder="Выберите пункт",
+)
+
+
+async def return_to_user_menu(
+    msg_txt: str, message: Message, tg_id: int = None
+) -> None:
+    if not tg_id:
+        tg_id = message.from_user.id
+    if await admin_check(tg_id):
+        await message.answer(
+            msg_txt,
+            reply_markup=admin_menu_reply,
+        )
+    else:
+        await message.answer(
+            msg_txt,
+            reply_markup=main_menu_reply,
+        )
 
 
 async def search_places(message: Message, state: FSMContext):
@@ -116,6 +165,7 @@ async def profile_keyboard(message: Message, state: FSMContext):
     tg_id = message.from_user.id
     user_info = await get_user(tg_id)
     reg_date = user_info.regist_date
+    await state.update_data(reg_date=reg_date)
     status_text = await get_user_status_text(tg_id)
     all_comments = (await get_full_comment_data_by_user(tg_id))[::-1]
     await state.update_data(all_comments=all_comments)
@@ -191,11 +241,11 @@ async def admin_menu(message: Message, state: FSMContext):
     if not await admin_check(user_id):
         user_role = await get_user_status_text(user_id)
         await return_to_user_menu(
-            user_id, f"Вы - {user_role}, вам не доступно админ-меню!", message
+            f"Вы - {user_role}, вам не доступно админ-меню!", message
         )
     else:
         await state.set_state(Step.admin_menu)
         await message.answer(
-            "Добро пожаловать в Админ-меню! Скоро здесь будет описание как всем этим пользоваться",
+            "Добро пожаловать в Админ-меню!",
             reply_markup=admin_extended_reply,
         )
