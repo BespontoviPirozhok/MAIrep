@@ -1,7 +1,7 @@
 # Бот LocationChooser - отличный помощник для поиска мест и мероприятий для досуга
 
 ## Общая информация
-Основа бота написана на [Aiogram](https://aiogram.dev/), база данных на [SQLAlchemy](https://www.sqlalchemy.org/), места ищем с применением [API Геосаджеста](https://yandex.ru/maps-api/docs/suggest-api/index.html), мероприятия (в разработке) ищем в [KudaGO](https://docs.kudago.com/api/)
+Основа бота написана на [Aiogram](https://aiogram.dev/), база данных на [SQLAlchemy](https://www.sqlalchemy.org/), места ищем с применением [API Геосаджеста](https://yandex.ru/maps-api/docs/suggest-api/index.html), мероприятия смотрим в [KudaGO](https://docs.kudago.com/api/)
 
 ### Сам бот в телеграме - [@mai_project_bot](https://t.me/mai_project_bot)
 
