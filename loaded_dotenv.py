@@ -1,8 +1,11 @@
 from dotenv import load_dotenv
 import os
+import sys
 
-# ТОКЕНЫ, БД и APIKEYS
-load_dotenv()
+if not load_dotenv():
+    print("Отсутствует необходимый .env файл")
+    sys.exit(1)
+
 TOKEN = os.getenv("TOKEN")
 DB = os.getenv("DATABASE")
 MAP_APIKEY = os.getenv("MAP_APIKEY")

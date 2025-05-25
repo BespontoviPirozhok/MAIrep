@@ -59,21 +59,14 @@ delete_all_user_comments_reply = ReplyKeyboardMarkup(
 async def handle_role_assignment(message: Message, user_tg_id: int):
     user_id = await get_user(tg_id=user_tg_id)
     admin_id = message.from_user.id
-    is_owner = await owner_check(
-        admin_id
-    )  # Проверка, является ли текущий пользователь владельцем
+    is_owner = await owner_check(admin_id)
+    print(is_owner)
 
     if user_id.user_status == 4:
-        await message.answer(
-            "Данный пользователь является владельцем, его никто не может ограничить",
-            reply_markup=back_reply,
-        )
+        await message.delete()
         return
-    if user_id.user_status == 12 and not is_owner:
-        await message.answer(
-            "Данный пользователь является администратором, ограничить его может только владелец",
-            reply_markup=back_reply,
-        )
+    if user_id.user_status == 3 and not is_owner:
+        await message.delete()
         return
 
     status_text = await get_user_status_text(user_tg_id)
@@ -231,36 +224,26 @@ async def role_change_exit(message: Message, state: FSMContext):
 
 @router.message(Step.give_roles)
 async def role_change_menu(message: Message, state: FSMContext):
-    raw_input = message.text.strip()
+    raw_input = message.text
     user = None
     tg_id = None
 
-    # Определение типа ввода
     if raw_input.startswith("@"):
-        # Обработка username
         tg_username = raw_input[1:]
         user = await get_user(tg_username=tg_username)
         if user:
             tg_id = user.tg_id
 
     elif raw_input.isdigit():
-        # Обработка ID
         tg_id = int(raw_input)
         user = await get_user(tg_id)
     else:
         await message.delete()
         return
 
-    # Проверка существования пользователя
-    if not user:
+    if tg_id == message.from_user.id or not user:
         await message.delete()
         return
 
-    # Проверка самодеактивации
-    if tg_id == message.from_user.id:
-        await message.delete()
-        return
-
-    # Передача управления и сохранение данных
     await handle_role_assignment(message, tg_id)
     await state.update_data(tg_id=tg_id)

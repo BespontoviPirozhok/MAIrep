@@ -58,7 +58,6 @@ async def main() -> None:
     except Exception as e:
         logger.exception(f"Бот упал, потому что {e}")
     finally:
-        logger.info("Выключение бота")
         await bot.session.close()
 
 
