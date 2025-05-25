@@ -63,16 +63,12 @@ async def chat(
     temperature: float = 0.7,
 ) -> Optional[str]:
     """Общий чат с GPT для списка сообщений"""
-    # Форматируем сообщения с нумерацией
-    formatted_message = "\n\n".join(msg for i, msg in enumerate(messages_list))
+    chat_promt = load_prompt("chat_promt.json")
+    messages = [chat_promt]
+    messages.append({"role": "user", "text": "\n".join(messages_list)})
 
-    # Создаем структуру сообщений для API
-    messages = [{"role": "user", "text": formatted_message}]
-
-    # Отправляем запрос
     response = await send_gpt_request(messages, temperature)
 
-    # Обрабатываем ответ
     try:
         if response and "result" in response:
             return response["result"]["alternatives"][0]["message"]["text"]
@@ -83,17 +79,17 @@ async def chat(
 
 
 async def av_comment(
-    sum_comms: str,
-    context: list[str] = None,
+    comments: list[str] = None,
     temperature: float = 0.3,
 ) -> Optional[str]:
     """Суммаризация текста"""
     summary_prompt = load_prompt("summary.json")
     messages = [summary_prompt]
-    if context:
-        messages.extend(context)
     messages.append(
-        {"role": "user", "text": f"Суммируй следующие комментарии:\n{sum_comms}"}
+        {
+            "role": "user",
+            "text": f"Суммируй следующие комментарии: {"\n".join(comments)}",
+        }
     )
 
     response = await send_gpt_request(messages, temperature)

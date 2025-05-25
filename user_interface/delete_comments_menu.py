@@ -78,9 +78,13 @@ async def display_comments_batch(message: Message, state: FSMContext):
 
     # Отображение комментариев
     for comment in batch:
+        try:
+            status = await get_user_status_text(comment.commentator_tg_id)
+        except Exception:
+            status = "Неизвестный статус"
         await message.answer(
             f"Место: <b>{comment.place.name}</b>\n"
-            f"TG_ID: <code>{comment.commentator_tg_id}</code> ({await get_user_status_text(comment.commentator_tg_id)})\n\n"
+            f"TG_ID: <code>{comment.commentator_tg_id}</code> ({status})\n\n"
             f"{comment.comment_text}",
             parse_mode="HTML",
             reply_markup=InlineKeyboardMarkup(
@@ -141,11 +145,14 @@ async def handle_delete_start(callback: CallbackQuery, state: FSMContext):
         None,
     )
 
-    # Формируем сообщение из локальных данных
+    try:
+        status = await get_user_status_text(target_comment.commentator_tg_id)
+    except Exception:
+        status = "Неизвестный статус"
     preview_message = (
         "Вы собираетесь удалить комментарий:\n\n"
         f"Место: <b>{target_comment.place.name}</b>\n"
-        f"TG_ID: <code>{tg_id}</code> ({await get_user_status_text(tg_id)})\n\n"
+        f"TG_ID: <code>{tg_id}</code> ({status})\n\n"
         f"{target_comment.comment_text}"
     )
 
