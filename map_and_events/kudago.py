@@ -169,13 +169,3 @@ async def full_event_data(event_short_data: Place_short):
         place_id,
         event_address,
     )
-
-
-# if __name__ == "__main__":
-#     print(asyncio.run(cities_kudago()))
-#     place = asyncio.run(search_kudago(input("Введите название мероприятия: "), "msk"))
-#     for event in place:
-#         full_data = asyncio.run(full_event_data(event))
-#         print(
-#             f"Название: {full_data.event_name}\nОписание: {full_data.description}\nВремя: {full_data.event_time}\nАдрес: {full_data.event_address}\n\n"
-#         )
