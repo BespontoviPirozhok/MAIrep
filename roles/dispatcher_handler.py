@@ -18,13 +18,6 @@ class DispatcherHandler:
         )
 
     @staticmethod
-    async def set_state(chat_id: int, new_state: State) -> None:
-        storage = DispatcherHandler.__dispatcher.storage
-        user_storage = StorageKey(DispatcherHandler.__bot.id, chat_id, chat_id)
-        new_context = FSMContext(storage=storage, key=user_storage)
-        await new_context.set_state(new_state)
-
-    @staticmethod
     def set_data(bot: Bot, dispatcher: Dispatcher):
         if DispatcherHandler.__bot or DispatcherHandler.__dispatcher:
             raise ValueError(
