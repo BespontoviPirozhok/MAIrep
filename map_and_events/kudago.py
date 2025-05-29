@@ -60,7 +60,6 @@ def pretty_date(date_str: str) -> str:
 def parse_datetime(dataTime):
     try:
         moscow_tz = datetime.timezone(datetime.timedelta(hours=3))
-
         start_timestamp = dataTime.get("start")
         if start_timestamp and start_timestamp > 0:
             dt_utc = datetime.datetime.fromtimestamp(
@@ -83,6 +82,8 @@ def parse_datetime(dataTime):
             date = pretty_date(dt_moscow.strftime("%Y-%m-%d"))
             time = dt_moscow.strftime("%H:%M")
             return f"{date} {time}"
+        if not start_date:
+            return "Неизвестно"
     except:
         return "Неизвестно"
 
@@ -141,7 +142,7 @@ async def search_kudago(request: str, city: str) -> list:
     expand = ""
     page_size = 5
     full_request = f"{BASE_URL}?q={request}&lang={lang}&expand={expand}&location={city}&ctype=event&page_size={page_size}"
-
+    # print("\n\n", full_request, "\n\n")
     try:
         data = await fetch_json(full_request)
         return await search_events_short_data(data)
